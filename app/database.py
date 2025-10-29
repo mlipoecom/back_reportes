@@ -1,5 +1,5 @@
 import asyncpg
-from .config import DB_CONFIG
+from config import DB_CONFIG
 
 db_pool = None
 

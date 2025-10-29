@@ -3,7 +3,7 @@ from datetime import datetime
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
 from typing import Optional
-from ..database import get_pool
+from database import get_pool
 
 router = APIRouter(
     prefix="/administrativa",

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Query
 from typing import Literal
-from ..database import get_pool
-from ..models import UpdateStatusResponse
+from database import get_pool
+from models import UpdateStatusResponse
 
 router = APIRouter(
     prefix="/administrativa",

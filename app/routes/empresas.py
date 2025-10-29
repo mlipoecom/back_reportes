@@ -2,8 +2,8 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from datetime import date
 from typing import Dict, Any
-from ..models import CompanyGenerate, CompanyGenerateResponse
-from ..database import get_pool
+from models import CompanyGenerate, CompanyGenerateResponse
+from database import get_pool
 
 router = APIRouter(
     prefix="/administrativa",

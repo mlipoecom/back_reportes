@@ -1,9 +1,9 @@
 from fastapi import APIRouter, HTTPException
 import bcrypt
-from ..security import create_access_token, create_refresh_token
-from ..utils import get_user_by_username, update_login_attempts, insert_log
-from ..mail import update_sent_mail
-from ..models import LoginRequest, TokenResponse
+from security import create_access_token, create_refresh_token
+from utils import get_user_by_username, update_login_attempts, insert_log
+from mail import update_sent_mail
+from models import LoginRequest, TokenResponse
 
 router = APIRouter(
     prefix="/api",

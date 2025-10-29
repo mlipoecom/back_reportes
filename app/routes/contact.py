@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Query
 import json
-from ..database import get_pool
-from ..mail import send_email_via_smtp, update_sent_mail
+from database import get_pool
+from mail import send_email_via_smtp, update_sent_mail
 
 router = APIRouter(
     prefix="/api",

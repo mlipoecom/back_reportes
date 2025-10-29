@@ -3,10 +3,10 @@ from fastapi.responses import JSONResponse
 from datetime import date
 import bcrypt
 from typing import Dict, Any
-from ..mail import send_user_password_email
-from ..models import UserGenerate, UserGenerateResponse
-from ..utils import generate_safe_password
-from ..database import get_pool
+from mail import send_user_password_email
+from models import UserGenerate, UserGenerateResponse
+from utils import generate_safe_password
+from database import get_pool
 
 
 router = APIRouter(

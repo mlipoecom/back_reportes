@@ -2,9 +2,9 @@ from fastapi import APIRouter, HTTPException, Path
 from fastapi.responses import JSONResponse
 import bcrypt
 from .auth import get_user_by_username
-from ..mail import send_new_password_email
-from ..utils import generate_safe_password
-from ..database import get_pool
+from mail import send_new_password_email
+from utils import generate_safe_password
+from database import get_pool
 
 router = APIRouter(
     prefix="/administrativa",

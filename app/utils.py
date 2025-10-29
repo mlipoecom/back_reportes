@@ -2,7 +2,7 @@ import random
 import string
 import json
 from fastapi import HTTPException
-from .database import get_pool
+from database import get_pool
 
 def generate_safe_password(length: int = 10) -> str:
     characters = string.ascii_letters + string.digits + "!@#$%&*?"

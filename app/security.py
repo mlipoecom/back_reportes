@@ -2,7 +2,7 @@
 from fastapi import HTTPException
 from datetime import datetime, timedelta
 from jose import jwt
-from .config import TOKEN_CONFIG
+from config import TOKEN_CONFIG
 
 
 def create_access_token(data: dict, expires_delta: timedelta = None) -> str:

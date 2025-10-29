@@ -2,8 +2,8 @@ from fastapi import HTTPException
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from .config import SMTP_CONFIG
-from .database import get_pool
+from config import SMTP_CONFIG
+from database import get_pool
 
 def send_email_via_smtp(subject: str, body: str, to_email: str):
     try:
