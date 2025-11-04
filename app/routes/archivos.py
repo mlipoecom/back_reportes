@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Query, HTTPException, Header
-from typing import Optional, List, Dict, Any
+from typing import Optional, Dict, Any
 from datetime import date
 from dateutil import parser as date_parser
 import json
@@ -12,7 +12,9 @@ router = APIRouter(
     tags=["Api"]
 )
 
+
 def get_company_id_from_token(authorization: str) -> int:
+    """Extrae el companyId desde el token JWT."""
     try:
         token = authorization.split(" ")[1]
     except Exception:
@@ -35,8 +37,8 @@ async def call_fn_get_archivos(
     p_fecha_hasta: Optional[date] = None,
     p_limit: Optional[int] = 10,
     p_offset: Optional[int] = 0
-) -> List[Dict[str, Any]]:
-
+) -> Dict[str, Any]:
+    """Llama a la función fn_get_files en PostgreSQL y devuelve el JSON procesado."""
     params = (
         p_id_cliente,
         p_id_nombre or "",
@@ -49,59 +51,64 @@ async def call_fn_get_archivos(
 
     try:
         async with (await get_pool()).acquire() as conn:
-            rows = await conn.fetch(
+            result = await conn.fetchval(
                 "SELECT fn_get_files($1,$2,$3,$4,$5,$6,$7);",
                 *params
             )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error en BD: {e}")
 
-    archivos = []
-    for record in rows:
-        json_data = record[0]
-        if isinstance(json_data, str):
-            try:
-                json_data = json.loads(json_data)
-            except:
-                pass
-        if isinstance(json_data, dict) and "ruta" in json_data:
-            ruta = json_data["ruta"]
-            # detectar tipo de URL y aplicar función correspondiente
-            if "drive.google.com" in ruta:
-                json_data["ruta"] = drive_direct_download_url(ruta)
-            elif "dropbox.com" in ruta:
-                json_data["ruta"] = transform_dropbox_link(ruta)
-            archivos.append(json_data)
-    return archivos
+    if not result:
+        return {"companyId": p_id_cliente, "supplier": None, "totalCount": 0, "files": []}
 
-@router.get("/archivos",
-            summary="Obtener archivos",
-            description="Devuelve los archivos pertenecientes al cliente filtrados por categorías, fechas y nombres para descarga directa",
-            responses={
+    # Si viene como string, convertirlo a JSON
+    if isinstance(result, str):
+        try:
+            result = json.loads(result)
+        except Exception:
+            raise HTTPException(status_code=500, detail="Error al parsear respuesta JSON de la BD")
+
+    # Procesar rutas dentro del array 'files'
+    files = result.get("files", [])
+    for file in files:
+        ruta = file.get("ruta", "")
+        if "drive.google.com" in ruta:
+            file["ruta"] = drive_direct_download_url(ruta)
+        elif "dropbox.com" in ruta:
+            file["ruta"] = transform_dropbox_link(ruta)
+
+    result["files"] = files
+    return result
+
+
+@router.get(
+    "/archivos",
+    summary="Obtener archivos",
+    description="Devuelve los archivos pertenecientes al cliente, filtrados por categorías, fechas y nombres, junto con información de la compañía.",
+    responses={
         200: {
             "description": "Ejecución exitosa",
             "content": {
                 "application/json": {
-                    "example": [
-                        {
-                            "ruta": "https://drive.google.com/........",
-                            "nombre": "acme_ddos_reporte_08_2025",
-                            "categoría": "DDOS",
-                            "fechaReporte": "2025-08-22"
-                        },
-                        {
-                            "ruta": "https://www.dropbox.com/scl/fi/........",
-                            "nombre": "acme_pentesting_reporte_07_2025",
-                            "categoría": "Pentesting",
-                            "fechaReporte": "2025-07-16"
-                        },
-                        {
-                            "ruta": "s3ssl://amzn-s3-demo-bucket/........",
-                            "nombre": "acme_treathounting_reporte_06_2025",
-                            "categoría": "Treathounting",
-                            "fechaReporte": "2025-06-09"
-                        }
-                    ]
+                    "example": {
+                        "companyId": 123,
+                        "supplier": "Ecom",
+                        "totalCount": 47,
+                        "files": [
+                            {
+                                "ruta": "https://drive.google.com/uc?export=download&id=...",
+                                "nombre": "acme_ddos_reporte_08_2025",
+                                "categoría": "DDOS",
+                                "fechaReporte": "2025-08-22"
+                            },
+                            {
+                                "ruta": "https://www.dropbox.com/scl/fi/...",
+                                "nombre": "acme_pentesting_reporte_07_2025",
+                                "categoría": "Pentesting",
+                                "fechaReporte": "2025-07-16"
+                            }
+                        ]
+                    }
                 }
             },
         },
@@ -116,16 +123,18 @@ async def call_fn_get_archivos(
                 }
             },
         },
-    })
+    }
+)
 async def get_archivos(
-    authorization: str = Header(..., description="Bearer Token", example="eyJhbGciOiJIUzI1NCI6NzEIkpXVCJ9........"),
+    authorization: str = Header(..., description="Bearer Token", example="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."),
     nombre: Optional[str] = Query(None, example="acme_treathounting_reporte_06_2025"),
     categoria: Optional[str] = Query(None, example="DDOS"),
     fecha_desde_str: Optional[str] = Query(None, alias="fecha_desde", example="2025-01-01"),
-    fecha_hasta_str: Optional[str] = Query(None, alias="fecha_hasta", example="2025-31-12"),
+    fecha_hasta_str: Optional[str] = Query(None, alias="fecha_hasta", example="2025-12-31"),
     limit: Optional[int] = Query(10, ge=1),
     offset: Optional[int] = Query(0, ge=0)
-) -> List[Dict[str, Any]]:
+) -> Dict[str, Any]:
+    """Endpoint principal: obtiene los archivos de una compañía según filtros."""
 
     company_id = get_company_id_from_token(authorization)
 
@@ -144,7 +153,7 @@ async def get_archivos(
         except ValueError:
             raise HTTPException(status_code=400, detail="Fecha inválida en fecha_hasta")
 
-    return await call_fn_get_archivos(
+    result = await call_fn_get_archivos(
         p_id_cliente=company_id,
         p_id_nombre=nombre,
         p_nombre_categoria=categoria,
@@ -153,3 +162,5 @@ async def get_archivos(
         p_limit=limit,
         p_offset=offset
     )
+
+    return result

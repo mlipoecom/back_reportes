@@ -11,7 +11,7 @@ router = APIRouter(
     tags=["Administrativas"]
 )
 
-@router.put("/usuario/{user_id}/password",
+@router.put("/usuario/{id}/password",
             summary="Cambiar password",
             description="Genera un nuev password y la envía por correo al usuario",
             responses={
@@ -40,8 +40,8 @@ router = APIRouter(
     }
     )
 
-async def change_password(user_id: str = Path(..., example="johnDoe123")):
-    user = await get_user_by_username(user_id)
+async def change_password(id: str = Path(..., example="johnDoe123")):
+    user = await get_user_by_username(id)
     if not user:
         raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
 
@@ -68,7 +68,7 @@ async def change_password(user_id: str = Path(..., example="johnDoe123")):
             result = await conn.fetchval(
                 "SELECT fn_change_password($1, $2)",
                 hashed_password,
-                user_id
+                id
             )
             if result != 'OK':
                 return {"ejecutado": False, "info": result}
@@ -80,7 +80,7 @@ async def change_password(user_id: str = Path(..., example="johnDoe123")):
         send_new_password_email(
             user_email=user.get("email"),
             full_name=f"{user.get('name', '')} {user.get('lastname', '')}",
-            username=user.get("externalId", user_id),
+            username=user.get("externalId", id),
             generated_password=password
         )
     except Exception as e:

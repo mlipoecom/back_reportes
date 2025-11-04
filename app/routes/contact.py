@@ -70,7 +70,7 @@ async def notify_supplier(username: str = Query(...,example="johnDoe123")):
             f"Estimado proveedor:\n\n"
             f"Le informamos que se ha realizado una solicitud de contacto "
             f"asociada al usuario {supplier_contact['userFullName']} (ID: {supplier_contact['userId']}) "
-            f"de la empresa {supplier_contact['companyName']} (ID: {supplier_contact['companyId']})."
+            f"de la empresa {supplier_contact['companyName']} (ID de compañía: {supplier_contact['companyId']})."
             f"Puede comunicarse con el usuario al correo {supplier_contact['userMail']}.\n\n"
             "Atentamente,\n"
             "El equipo de soporte."
