@@ -1,7 +1,7 @@
 
 from fastapi import HTTPException
 from datetime import datetime, timedelta
-from jose import jwt
+from jose import jwt, JWTError, ExpiredSignatureError
 from config import TOKEN_CONFIG
 
 
@@ -21,7 +21,7 @@ def decode_token(token: str) -> dict:
     try:
         payload = jwt.decode(token, TOKEN_CONFIG["SECRET_KEY"], algorithms=TOKEN_CONFIG["ALGORITHM"])
         return payload
-    except jwt.ExpiredSignatureError:
+    except ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expirado")
-    except jwt.InvalidTokenError:
+    except JWTError:
         raise HTTPException(status_code=401, detail="Token inválido")
