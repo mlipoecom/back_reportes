@@ -1,0 +1,998 @@
+{
+	"info": {
+		"_postman_id": "43e8b11d-0433-427a-abcb-5991eab3046b",
+		"name": "portal archivos",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "26463482"
+	},
+	"item": [
+		{
+			"name": "000_administrativas",
+			"item": [
+				{
+					"name": "crear-proveedor",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"name\": \"AJAX3\",\r\n  \"business_name\": \"AJAX3 SA\",\r\n  \"external_id\": \"AJAX4\",\r\n  \"description\": \"Desc\",\r\n  \"status\": \"activo\",\r\n  \"email\": \"ajax3@ajax3.com\"\r\n}"
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8000/administrativa/crear-proveedor",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"administrativa",
+								"crear-proveedor"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "crear-empresa",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"name\": \"AJAX5\",\r\n  \"business_name\": \"AJAX5 SA\",\r\n  \"external_id\": \"AJAX5\",\r\n  \"description\": \"Desc\",\r\n  \"status\": \"activo\",\r\n  \"supplier_id\": 1,\r\n  \"email\": \"ajax3@ajax3.com\"\r\n}"
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8000/administrativa/crear-empresa",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"administrativa",
+								"crear-empresa"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "crear-usuario",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let jsonData;\r",
+									"try {\r",
+									"    jsonData = pm.response.json();\r",
+									"} catch (e) {\r",
+									"    jsonData = null;\r",
+									"}\r",
+									"\r",
+									"function extractId(obj) {\r",
+									"    if (!obj || typeof obj !== 'object') return undefined;\r",
+									"    if (obj.id !== undefined) return obj.id;\r",
+									"    if (obj.data && obj.data.id !== undefined) return obj.data.id;\r",
+									"    if (obj.result && obj.result.id !== undefined) return obj.result.id;\r",
+									"    return undefined;\r",
+									"}\r",
+									"\r",
+									"const id = extractId(jsonData);\r",
+									"let validId = false;\r",
+									"if (typeof id === 'number' && isFinite(id)) {\r",
+									"    pm.collectionVariables.set('userId', id);\r",
+									"    validId = true;\r",
+									"} else if (typeof id === 'string' && id.trim().length > 0) {\r",
+									"    pm.collectionVariables.set('userId', id);\r",
+									"    validId = true;\r",
+									"}\r",
+									"\r",
+									"pm.test('Response status is 2xx', function () {\r",
+									"    pm.expect(pm.response.code).to.be.within(200, 299);\r",
+									"});\r",
+									"pm.test('Identifier (id) was found and valid', function () {\r",
+									"    pm.expect(validId, 'A valid id was found in the response').to.be.true;\r",
+									"});\r",
+									"\r",
+									"if (validId) {\r",
+									"    console.log('userId set to:', id);\r",
+									"} else {\r",
+									"    console.log('userId was not set. Response body:', jsonData);\r",
+									"}\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "Samsung",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "password",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"Martín\",\r\n    \"lastName\": \"Liporace\",\r\n    \"email\": \"martin.liporace@ecom.com.uy\",\r\n    \"externalId\": \"mlipo\",\r\n    \"companyId\": {{comapnyId}},\r\n    \"status\": \"activo\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/administrativa/crear-usuario",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"administrativa",
+								"crear-usuario"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "cambiar-estado",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"usuario\": \"maria11.lopez\",\r\n  \"contraseña\": \"fu19ia?Gf&\"\r\n}"
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8000/administrativa/cambiar-estado?p_id=1&p_category=user&p_status=activo",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"administrativa",
+								"cambiar-estado"
+							],
+							"query": [
+								{
+									"key": "p_id",
+									"value": "1"
+								},
+								{
+									"key": "p_category",
+									"value": "user"
+								},
+								{
+									"key": "p_status",
+									"value": "activo"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "change-password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"userId\": \"JohnDoe\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/administrativa/change-password",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"administrativa",
+								"change-password"
+							]
+						},
+						"description": "Generated from cURL: curl -X 'POST' \\\r\n  'http://localhost:8000/administrativa/change-password' \\\r\n  -H 'accept: application/json' \\\r\n  -H 'Content-Type: application/json' \\\r\n  -d '{\r\n  \"userId\": \"JohnDoe\"\r\n}'"
+					},
+					"response": []
+				},
+				{
+					"name": "logs",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8000/administrativa/logs?empresa={{comapnyId}}&usuario=1&fecha_hasta=&limit=10&offset=0",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"administrativa",
+								"logs"
+							],
+							"query": [
+								{
+									"key": "empresa",
+									"value": "{{comapnyId}}"
+								},
+								{
+									"key": "usuario",
+									"value": "1"
+								},
+								{
+									"key": "fecha_desde",
+									"value": null,
+									"disabled": true
+								},
+								{
+									"key": "fecha_hasta",
+									"value": ""
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								}
+							]
+						},
+						"description": "Generated from cURL: curl -X 'GET' \\\r\n  'http://localhost:8000/administrativa/?p_company_id=1&p_limit=10&p_offset=0' \\\r\n  -H 'accept: application/json'"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "001_api",
+			"item": [
+				{
+					"name": "login exitoso",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let jsonData;",
+									"let token;",
+									"",
+									"// 1. Parse JSON response safely",
+									"try {",
+									"    jsonData = pm.response.json();",
+									"} catch (e) {",
+									"    jsonData = {};",
+									"    console.error('Response is not valid JSON:', e);",
+									"}",
+									"",
+									"// 2. Extract token property with fallback",
+									"if (jsonData) {",
+									"    token = jsonData.accessToken || jsonData.token || jsonData.access_token;",
+									"}",
+									"",
+									"// 3. Set collection variable if token found",
+									"if (token) {",
+									"    pm.collectionVariables.set('token', token);",
+									"}",
+									"",
+									"// 4. Assertions",
+									"pm.test('Response status code is 2xx', function () {",
+									"    pm.expect(pm.response.code).to.be.within(200, 299);",
+									"});",
+									"pm.test('Token is present in response', function () {",
+									"    pm.expect(token, 'Token should be present in response').to.exist;",
+									"});",
+									"",
+									"// 5. Log helpful message",
+									"if (token) {",
+									"    console.log('Token extracted and set as collection variable:', token);",
+									"} else {",
+									"    console.warn('No token found in response. Check property names (accessToken, token, access_token).');",
+									"}",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"usuario\": \"mlipo\",\r\n  \"contraseña\": \"yE1f!Q2R%s\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/login",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"login"
+							]
+						},
+						"description": "Generated from cURL: curl -X POST \"http://127.0.0.1:8000/login\" \\\r\n-H \"Content-Type: application/json\" \\\r\n-d '{\r\n  \"username\": \"usuario_demo\",\r\n  \"password\": \"clave123\"\r\n}'\r\n"
+					},
+					"response": []
+				},
+				{
+					"name": "login falla usuario",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let jsonData;",
+									"let detail;",
+									"",
+									"// 1. Parseo Json",
+									"try {",
+									"    jsonData = pm.response.json();",
+									"} catch (e) {",
+									"    jsonData = {};",
+									"    console.error('Response is not valid JSON:', e);",
+									"}",
+									"",
+									"// 2. Extraigo detail",
+									"if (jsonData) {",
+									"    detail = jsonData.detail;",
+									"}",
+									"",
+									"",
+									"// 3. Tests",
+									"pm.test('Response status code is 4xx', function () {",
+									"    pm.expect(pm.response.code).to.be.within(400, 499);",
+									"});",
+									"pm.test('Detail is Usuario o contraseña incorrectos', function () {",
+									"    pm.expect(detail, 'Usuario o contraseña incorrectos').to.exist;",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"usuario\": \"\",\r\n  \"contraseña\": \"Yw7nS%orA0\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/login",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"login"
+							]
+						},
+						"description": "Generated from cURL: curl -X POST \"http://127.0.0.1:8000/login\" \\\r\n-H \"Content-Type: application/json\" \\\r\n-d '{\r\n  \"username\": \"usuario_demo\",\r\n  \"password\": \"clave123\"\r\n}'\r\n"
+					},
+					"response": []
+				},
+				{
+					"name": "login falla password",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let jsonData;",
+									"let detail;",
+									"",
+									"// 1. Parseo Json",
+									"try {",
+									"    jsonData = pm.response.json();",
+									"} catch (e) {",
+									"    jsonData = {};",
+									"    console.error('Response is not valid JSON:', e);",
+									"}",
+									"",
+									"// 2. Extraigo detail",
+									"if (jsonData) {",
+									"    detail = jsonData.detail;",
+									"}",
+									"",
+									"",
+									"// 3. Tests",
+									"pm.test('Response status code is 4xx', function () {",
+									"    pm.expect(pm.response.code).to.be.within(400, 499);",
+									"});",
+									"pm.test('Detail is Usuario o contraseña incorrectos', function () {",
+									"    pm.expect(detail, 'Usuario o contraseña incorrectos').to.exist;",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"usuario\": \"mlipo\",\r\n  \"contraseña\": \"\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/login",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"login"
+							]
+						},
+						"description": "Generated from cURL: curl -X POST \"http://127.0.0.1:8000/login\" \\\r\n-H \"Content-Type: application/json\" \\\r\n-d '{\r\n  \"username\": \"usuario_demo\",\r\n  \"password\": \"clave123\"\r\n}'\r\n"
+					},
+					"response": []
+				},
+				{
+					"name": "archivos exitoso",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Visualization Script",
+									"// Visualization Script",
+									"const template = `",
+									"<style>",
+									"  table.archivos-table {",
+									"    border-collapse: collapse;",
+									"    width: 100%;",
+									"    font-family: Arial, sans-serif;",
+									"    margin-top: 1em;",
+									"  }",
+									"  table.archivos-table th, table.archivos-table td {",
+									"    border: 1px solid #ddd;",
+									"    padding: 8px;",
+									"    text-align: left;",
+									"  }",
+									"  table.archivos-table th {",
+									"    background-color: #f2f2f2;",
+									"    font-weight: bold;",
+									"  }",
+									"  table.archivos-table tr:nth-child(even) {",
+									"    background-color: #fafafa;",
+									"  }",
+									"</style>",
+									"<h3>Lista de Archivos</h3>",
+									"<table class=\"archivos-table\">",
+									"  <thead>",
+									"    <tr>",
+									"      <th>Ruta</th>",
+									"      <th>Nombre</th>",
+									"      <th>Categoría</th>",
+									"      <th>Fecha de Reporte</th>",
+									"    </tr>",
+									"  </thead>",
+									"  <tbody>",
+									"    {{#each archivos}}",
+									"      <tr>",
+									"        <td>{{ruta}}</td>",
+									"        <td>{{nombre}}</td>",
+									"        <td>{{categoría}}</td>",
+									"        <td>{{fechaReporte}}</td>",
+									"      </tr>",
+									"    {{/each}}",
+									"    {{#unless archivos.length}}",
+									"      <tr><td colspan=\"4\" style=\"text-align:center; color:#888;\">No hay archivos para mostrar.</td></tr>",
+									"    {{/unless}}",
+									"  </tbody>",
+									"</table>",
+									"`;",
+									"",
+									"function createPayload() {",
+									"  let data = [];",
+									"  try {",
+									"    data = pm.response.json();",
+									"    if (!Array.isArray(data)) data = [];",
+									"  } catch (e) {",
+									"    data = [];",
+									"  }",
+									"  return { archivos: data };",
+									"}",
+									"",
+									"pm.visualizer.set(template, createPayload());",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/api/archivos?nombre=&categoria=&fecha_desde=&fecha_hasta=&limit=20&offset=0",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"archivos"
+							],
+							"query": [
+								{
+									"key": "nombre",
+									"value": ""
+								},
+								{
+									"key": "categoria",
+									"value": ""
+								},
+								{
+									"key": "fecha_desde",
+									"value": ""
+								},
+								{
+									"key": "fecha_hasta",
+									"value": ""
+								},
+								{
+									"key": "limit",
+									"value": "20"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "archivos token expirado",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Verify status code is 401",
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									"",
+									"// Verify response has property 'detail' with value 'Token expirado'",
+									"pm.test(\"Body has detail: Token expirado\", function () {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json).to.be.an(\"object\");",
+									"    pm.expect(json).to.have.property(\"detail\", \"Token expirado\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJJRCI6MSwibmFtZSI6Ik1hcnRcdTAwZWRuIiwiZW1haWwiOiJtYXJ0aW4ubGlwb3JhY2VAZWNvbS5jb20udXkiLCJzdGF0dXMiOiJhY3Rpdm8iLCJ1c2VySWQiOiJtbGlwbyIsImxhc3RuYW1lIjoiTGlwb3JhY2UiLCJjb21wYW55SWQiOjEsImhhc1NlbnRFbWFpbCI6ZmFsc2UsImNvbXBhbnlTdGF0dXMiOiJhY3Rpdm8iLCJsb2dpbkF0dGVtcHRzIjowLCJleHAiOjE3NjE4NTE0NDYsInR5cGUiOiJhY2Nlc3MifQ.eJRHaKVR_Zwr5J6bMbsyNJHA62GMGd9gEEcDoTE9bV8",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/api/archivos?nombre=&categoria=&fecha_desde=&fecha_hasta=&limit=20&offset=0",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"archivos"
+							],
+							"query": [
+								{
+									"key": "nombre",
+									"value": ""
+								},
+								{
+									"key": "categoria",
+									"value": ""
+								},
+								{
+									"key": "fecha_desde",
+									"value": ""
+								},
+								{
+									"key": "fecha_hasta",
+									"value": ""
+								},
+								{
+									"key": "limit",
+									"value": "20"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "contact primer envío",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Body contains 'Correo enviado correctamente.'\", function () {",
+									"    pm.expect(pm.response.text()).to.include(\"Correo enviado correctamente.\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8000/api/contact?username={{user}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"contact"
+							],
+							"query": [
+								{
+									"key": "username",
+									"value": "{{user}}"
+								}
+							]
+						},
+						"description": "Generated from cURL: curl -X 'POST' \\\r\n  'http://localhost:8000/api/contact?username=mlipo' \\\r\n  -H 'accept: application/json' \\\r\n  -d ''"
+					},
+					"response": []
+				},
+				{
+					"name": "contact segundo envío",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const body = pm.response.text();\r",
+									"const re = /El usuario\\s+(.+?)\\s+ya envió un correo\\b/i;\r",
+									"\r",
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Body contains expected message format (ignoring username)\", function () {\r",
+									"    pm.expect(re.test(body)).to.be.true;\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8000/api/contact?username={{user}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"contact"
+							],
+							"query": [
+								{
+									"key": "username",
+									"value": "{{user}}"
+								}
+							]
+						},
+						"description": "Generated from cURL: curl -X 'POST' \\\r\n  'http://localhost:8000/api/contact?username=mlipo' \\\r\n  -H 'accept: application/json' \\\r\n  -d ''"
+					},
+					"response": []
+				},
+				{
+					"name": "contact usuario incorrecto",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"\r",
+									"pm.test(\"Status code is 404\", function () {\r",
+									"    pm.response.to.have.status(404);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Body contains 'Error al obtener datos del proveedor'\", function () {\r",
+									"    pm.expect(pm.response.text()).to.include(\"Error al obtener datos del proveedor\");\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8000/api/contact?username=user",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"contact"
+							],
+							"query": [
+								{
+									"key": "username",
+									"value": "user"
+								}
+							]
+						},
+						"description": "Generated from cURL: curl -X 'POST' \\\r\n  'http://localhost:8000/api/contact?username=mlipo' \\\r\n  -H 'accept: application/json' \\\r\n  -d ''"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "token",
+			"value": ""
+		},
+		{
+			"key": "supplierId",
+			"value": ""
+		},
+		{
+			"key": "comapnyId",
+			"value": ""
+		},
+		{
+			"key": "userId",
+			"value": ""
+		},
+		{
+			"key": "user",
+			"value": ""
+		}
+	]
+}
