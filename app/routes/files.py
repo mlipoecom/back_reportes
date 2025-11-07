@@ -37,7 +37,7 @@ def get_user_id_from_token(authorization: str) -> int:
         raise HTTPException(status_code=401, detail="Encabezado Authorization inválido")
 
     payload = decode_token(token)
-    user_id = payload.get("userId")
+    user_id = payload.get("ID")
 
     if not user_id:
         raise HTTPException(status_code=401, detail="Token sin userId")
@@ -196,7 +196,7 @@ async def get_archivos(
 async def download_file_by_id(
     file_id: int,
     authorization: str = Header(..., description="Bearer Token", example="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
-    )-> Dict[str, Any]:
+    )-> str:
     """Obtiene el archivo por id y registra la descarga."""
     user_id = get_user_id_from_token(authorization)
 
@@ -206,17 +206,20 @@ async def download_file_by_id(
     pool = await get_pool()
     async with pool.acquire() as conn:
         async with conn.transaction():
-            file_data = await get_file_by_id(conn, file_id)
-            await log_file_download(conn, user_id, file_id, ip, "log_file_download_result")
+            file_data = await get_file_by_id(file_id)
+            print("file_data: ",file_data)
+            await log_file_download(user_id, file_id, ip, "log_file_download_result")
 
-    return file_data
+    return file_data['fn_get_file_path']
 
-async def get_file_by_id(conn, file_id: int) -> Any:
+async def get_file_by_id(file_id: int) -> Any:
     """Obtiene el archivo desde la base de datos utilizando el SP correspondiente."""
-    try:
-        result = await conn.fetch("SELECT fn_get_file_path($1);", file_id)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error en BD: {e}")
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        try:
+            result = await conn.fetch("SELECT fn_get_file_path($1);", file_id)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error en BD: {e}")
 
     if not result:
         raise HTTPException(status_code=404, detail="Archivo no encontrado")
@@ -224,9 +227,11 @@ async def get_file_by_id(conn, file_id: int) -> Any:
     return result[0]
 
 
-async def log_file_download(conn, user_id: int, file_id: int, ip: str, cursor_name: str) -> None:
+async def log_file_download(user_id: int, file_id: int, ip: str, cursor_name: str) -> None:
     """Registra en la base de datos la descarga del archivo."""
-    try:
-        await conn.execute("CALL sp_insert_download($1,$2,$3,$4);", user_id, file_id, ip, cursor_name)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error en BD: {e}")
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        try:
+            await conn.execute("CALL sp_insert_download($1,$2,$3,$4);", user_id, file_id, ip, cursor_name)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error en BD: {e}")
