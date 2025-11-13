@@ -20,3 +20,9 @@ TOKEN_CONFIG = {
     "ACCESS_TOKEN_EXPIRE_MINUTES": 30,
     "REFRESH_TOKEN_EXPIRE_DAYS": 7
 }
+
+
+S3_CONFIG = {
+    "S3_ENDPOINT": "https://s3.localhost.localstack.cloud:4566",
+    "S3_BUCKET": "portal-reportes"
+}
