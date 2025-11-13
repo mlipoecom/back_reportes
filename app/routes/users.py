@@ -7,6 +7,7 @@ from mail import send_user_password_email
 from models import UserGenerate, UserGenerateResponse
 from utils import generate_safe_password
 from database import get_pool
+from models import AssignRolesRequest
 
 
 router = APIRouter(
@@ -149,3 +150,74 @@ async def generate_and_create_user(user_data: UserGenerate):
         info=db_response["info"],
         id=db_response["id"]
     )
+
+
+
+
+@router.post(
+    "/asignar-roles",
+    summary="Asignar roles",
+    description="Asigna roles a un usuario o empresa",
+    responses={
+        200: {
+            "description": "Ejecución exitosa",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "info": "Roles asignados exitosamente",
+                    }
+                }
+            },
+        },
+        400: {
+            "description": "Ejecución fallida",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "info": "Error al asignar roles",
+                    }
+                }
+            },
+        },
+        500: {
+            "description": "Error interno del servidor",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "info": "Error en la BD: conexión fallida",
+                    }
+                }
+            },
+        },
+    }
+)  # Type: id: id del usuario  role_id: id del rol
+async def assign_roles(payload: AssignRolesRequest) -> str:
+    pool = await get_pool()
+    cursor_name = "assign_role_result"
+    params = (payload.user_id, payload.role_id, cursor_name)
+
+    async with pool.acquire() as conn:
+        try:
+            message = ""
+            async with conn.transaction():
+                await conn.execute("CALL sp_assign_role($1, $2, $3);", *params)
+
+                rows = await conn.fetch(f'FETCH ALL IN "{cursor_name}";')
+
+                if not rows:
+                    raise HTTPException(status_code=500, detail="Error en la BD: SP no devolvió datos")
+
+                message = rows[0].get("message")
+                if not message:
+                    raise HTTPException(status_code=500, detail="Error en la BD: respuesta inválida del SP")
+
+                # Detectar errores según el texto del mensaje
+                if any(word in message.lower() for word in ["error"]):
+                    raise HTTPException(status_code=400, detail=message)
+
+            return JSONResponse(status_code=200, content={"info": message})
+
+        except HTTPException as http_exc:
+            raise http_exc
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))

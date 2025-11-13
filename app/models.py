@@ -53,3 +53,6 @@ class MessageResponse(BaseModel):
     message: str
     status: str
 
+class AssignRolesRequest(BaseModel):
+    user_id: int = Field(..., example=1, description="ID del usuario")
+    role_id: int = Field(..., example=1, description="ID del rol")
