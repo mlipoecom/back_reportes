@@ -1,4 +1,14 @@
 from pydantic import BaseModel, Field, EmailStr
+from typing import Optional
+
+class UserGenerate(BaseModel):
+    name: str = Field(..., max_length=50, example="John", description="Nombre del usuario")
+    lastName: str = Field(..., max_length=50, example="Doe", description="Apellido del usuario")
+    email: EmailStr = Field(..., max_length=50, example="john.doe@ecom.com.uy", description="Email del usuario")
+    externalId: str = Field(..., max_length=50, example="johnDoe123", description="Identificador externo del usuario")
+    companyId: Optional[int] = Field(None, example=1, description="ID de la compañía a la que pertenece el usuario")
+    customerId: Optional[int] = Field(None, example=1, description="ID del cliente al que pertenece el usuario")
+    status: str = Field('activo', description="Estado inicial del usuario ('activo', 'suspendido', 'inactivo')")
 
 class UserGenerate(BaseModel):
     name: str = Field(..., max_length=50, example="John", description="Nombre del usuario")

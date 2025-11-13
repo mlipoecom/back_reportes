@@ -3,47 +3,14 @@ from typing import Optional, Dict, Any
 from datetime import date
 from dateutil import parser as date_parser
 import json
-from security import decode_token
 from database import get_pool
+from utils import get_user_id_from_token, get_company_id_from_token
 from convert_files import drive_direct_download_url, transform_dropbox_link
 
 router = APIRouter(
     prefix="/api",
     tags=["Api"]
 )
-
-
-def get_company_id_from_token(authorization: str) -> int:
-    """Extrae el companyId desde el token JWT."""
-    try:
-        token = authorization.split(" ")[1]
-    except Exception:
-        raise HTTPException(status_code=401, detail="Encabezado Authorization inválido")
-
-    payload = decode_token(token)
-    company_id = payload.get("companyId")
-
-    if not company_id:
-        raise HTTPException(status_code=401, detail="Token sin companyId")
-
-    return company_id
-
-
-def get_user_id_from_token(authorization: str) -> int:
-    """Extrae el userId desde el token JWT."""
-    try:
-        token = authorization.split(" ")[1]
-    except Exception:
-        raise HTTPException(status_code=401, detail="Encabezado Authorization inválido")
-
-    payload = decode_token(token)
-    user_id = payload.get("ID")
-
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Token sin userId")
-
-    return user_id
-
 
 async def call_fn_get_archivos(
     p_id_cliente: int,

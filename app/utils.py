@@ -3,6 +3,7 @@ import string
 import json
 from fastapi import HTTPException
 from database import get_pool
+from security import decode_token
 
 def generate_safe_password(length: int = 10) -> str:
     characters = string.ascii_letters + string.digits + "!@#$%&*?"
@@ -58,3 +59,35 @@ async def insert_log(company: int, user:int) -> dict:
     except Exception as e:
         msg = str(e).split("\n")[0].strip()
         raise HTTPException(status_code=500, detail=f"Error al insertar log: {msg}")
+    
+def get_company_id_from_token(authorization: str) -> int:
+    """Extrae el companyId desde el token JWT."""
+    try:
+        token = authorization.split(" ")[1]
+    except Exception:
+        raise HTTPException(status_code=401, detail="Encabezado Authorization inválido")
+
+    payload = decode_token(token)
+    company_id = payload.get("companyId")
+
+    if not company_id:
+        raise HTTPException(status_code=401, detail="Token sin companyId")
+
+    return company_id
+
+
+def get_user_id_from_token(authorization: str) -> int:
+    """Extrae el userId desde el token JWT."""
+    try:
+        token = authorization.split(" ")[1]
+    except Exception:
+        raise HTTPException(status_code=401, detail="Encabezado Authorization inválido")
+
+    payload = decode_token(token)
+    user_id = payload.get("ID")
+
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Token sin userId")
+
+    return user_id
+

@@ -22,22 +22,29 @@ async def call_sp_insert_user(
     p_external_id: str,
     p_hashed_password: str,
     p_status: str,
-    p_company: int,
-    p_email: str
+    p_company: int = None,
+    p_customer: int = None,
+    p_email: str = ""
 ) -> Dict[str, Any]:
     p_creation_date = date.today()
     cursor_name = "user_insert_result"
 
+    if p_company is None and p_customer is None:
+        raise HTTPException(status_code=400, detail="Debe enviarse companyId o customerId")
+
+    db_company = p_company if p_company is not None else None
+    db_customer = p_customer if p_customer is not None else None
+
     params = (
         p_name, p_last_name, p_external_id, p_hashed_password,
-        p_creation_date, p_status, p_company, p_email, cursor_name
+        p_creation_date, p_status, db_company, db_customer, p_email, cursor_name
     )
 
     try:
         async with (await get_pool()).acquire() as conn:
             async with conn.transaction():
                 await conn.execute(
-                    "CALL sp_insert_user($1,$2,$3,$4,$5,$6,$7,$8,$9);",
+                    "CALL sp_insert_user($1,$2,$3,$4,$5,$6,$7,$8,$9,$10);",
                     *params
                 )
                 rows = await conn.fetch(f'FETCH ALL IN "{cursor_name}";')
@@ -113,13 +120,12 @@ async def generate_and_create_user(user_data: UserGenerate):
         user_data.externalId,
         hashed_password,
         user_data.status,
-        user_data.companyId,
-        user_data.email
+        p_company=user_data.companyId if user_data.companyId else None,
+        p_customer=user_data.customerId if user_data.customerId else None,
+        p_email=user_data.email
     )
 
-    if db_response["id"] == 0 or (
-        db_response["info"] and "error" in db_response["info"].lower()
-    ):
+    if db_response["id"] == 0 or (db_response["info"] and "error" in db_response["info"].lower()):
         return JSONResponse(
             status_code=400,
             content={
@@ -150,9 +156,6 @@ async def generate_and_create_user(user_data: UserGenerate):
         info=db_response["info"],
         id=db_response["id"]
     )
-
-
-
 
 @router.post(
     "/asignar-roles",
