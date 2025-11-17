@@ -1,0 +1,7 @@
+[project]
+name = "reports_api"
+version = "0.1.0"
+description = "Upload and download reports system web-app backend API"
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+dependencies = []
