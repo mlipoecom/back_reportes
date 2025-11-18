@@ -59,7 +59,7 @@ async def login(request: LoginRequest):
         raise HTTPException(status_code=403, detail="Usuario inhabilitado. Contacte al vendedor")
     
     #  Bloqueo si la empresa no está activa
-    if user.get("companyStatus") != "activo":
+    if user.get("entityStatus") != "activo":
         raise HTTPException(status_code=403, detail="Empresa inhabilitada. Contacte al vendedor")
 
     stored_hash = user.get("hashPassword")
