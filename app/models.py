@@ -64,3 +64,13 @@ class AssignClientRequest(BaseModel):
     userId: int
     customerId: int
     categorieId: List[int]
+
+class CategoryCreateRequest(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+class CategoryUpdateRequest(BaseModel):
+    newName: Optional[str] = None
+    newDescription: Optional[str] = None
+
+
