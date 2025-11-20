@@ -5,7 +5,6 @@ from dateutil import parser as date_parser
 import json
 from database import get_pool
 from utils import get_user_id_from_token, get_company_id_from_token
-from convert_files import drive_direct_download_url, transform_dropbox_link
 
 router = APIRouter(
     prefix="/api",
@@ -53,13 +52,6 @@ async def call_fn_get_archivos(
 
     # Procesar rutas dentro del array 'files'
     files = result.get("files", [])
-    for file in files:
-        ruta = file.get("ruta", "")
-        if "drive.google.com" in ruta:
-            file["ruta"] = drive_direct_download_url(ruta)
-        elif "dropbox.com" in ruta:
-            file["ruta"] = transform_dropbox_link(ruta)
-
     result["files"] = files
     return result
 
@@ -108,6 +100,7 @@ async def call_fn_get_archivos(
         },
     }
 )
+
 async def get_archivos(
     authorization: str = Header(..., description="Bearer Token", example="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."),
     nombre: Optional[str] = Query(None, example="acme_treathounting_reporte_06_2025"),

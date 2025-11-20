@@ -1,6 +1,6 @@
 import json
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Header
 from fastapi.responses import JSONResponse
 from typing import Optional
 from database import get_pool
@@ -61,8 +61,12 @@ async def get_logs(
     fecha_desde: Optional[str] = Query(None, description="Fecha desde (YYYY-MM-DD)", example="2025-01-01"),
     fecha_hasta: Optional[str] = Query(None, description="Fecha hasta (YYYY-MM-DD)", example="2025-31-12"),
     limit: Optional[int] = Query(10, description="Límite de registros"),
-    offset: Optional[int] = Query(0, description="Desplazamiento de registros")
+    offset: Optional[int] = Query(0, description="Desplazamiento de registros"),
+    authorization: str = Header(..., description="Bearer Token")
 ):
+    # Valido token
+    if authorization is None or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Token inválido o faltante")
 
     try:
         date_from = datetime.strptime(fecha_desde, "%Y-%m-%d").date() if fecha_desde else None

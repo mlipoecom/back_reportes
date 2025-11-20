@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Header
 from typing import Literal
 from database import get_pool
 from models import UpdateStatusResponse
@@ -43,8 +43,13 @@ async def update_status(
     ),
     p_status: Literal["activo", "suspendido", "inactivo"] = Query(
         ..., description="Nuevo estado", example="activo"
-    )
-):
+    ),
+    authorization: str = Header(..., description="Bearer Token")):
+
+    # Valido token
+    if authorization is None or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Token inválido o faltante")
+
     pool = await get_pool()
     async with pool.acquire() as conn:
         try:

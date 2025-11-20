@@ -1,9 +1,10 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Header
 from fastapi.responses import JSONResponse
 from datetime import date
 from typing import Dict, Any
 from models import SupplierGenerate, SupplierGenerateResponse
 from database import get_pool
+from utils import get_user_id_from_token
 
 router = APIRouter(
     prefix="/administrativa",
@@ -16,20 +17,21 @@ async def call_sp_insert_supplier(
     p_external_id: str,
     p_description: str,
     p_status: str,
-    p_email: str
+    p_email: str,
+    p_created_by: int
 ) -> Dict[str, Any]:
     p_creation_date = date.today()
     cursor_name = "supplier_insert_result"
 
     params = (
         p_name, p_business_name, p_external_id, p_description,
-        p_creation_date, p_status, p_email, cursor_name
+        p_creation_date, p_status, p_email, p_created_by, cursor_name
     )
     try:
         async with (await get_pool()).acquire() as conn:
             async with conn.transaction():
                 await conn.execute(
-                    "CALL sp_insert_supplier($1,$2,$3,$4,$5,$6,$7,$8);",
+                    "CALL sp_insert_supplier($1,$2,$3,$4,$5,$6,$7,$8,$9);",
                     *params
                 )
                 rows = await conn.fetch(f'FETCH ALL IN "{cursor_name}";')
@@ -81,11 +83,22 @@ async def call_sp_insert_supplier(
         },
     })
 
-async def generate_and_create_supplier(supplier_data: SupplierGenerate):
+async def generate_and_create_supplier(
+    supplier_data: SupplierGenerate,
+    authorization: str = Header(..., description="Bearer Token")):
+
+    # Valido token
+    if authorization is None or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Token inválido o faltante")
+
+    token = authorization
+
+    user_id = get_user_id_from_token(token)
+
     try:
         db_response = await call_sp_insert_supplier(
         supplier_data.name, supplier_data.businessName, supplier_data.externalId,
-        supplier_data.description, supplier_data.status, supplier_data.email
+        supplier_data.description, supplier_data.status, supplier_data.email, user_id
     )
         if db_response["id"] == 0 or (
             db_response["info"] and "error" in db_response["info"].lower()
