@@ -11,7 +11,9 @@ router = APIRouter(
     tags=["Categorías"]
 )
 
-
+# -------------------------------
+# CREATE CATEGORY
+# -------------------------------
 @router.post("/crear")
 async def create_category(
     body: CategoryCreateRequest,
@@ -111,8 +113,45 @@ async def update_category(
         except Exception as e:
             raise HTTPException(500, str(e))
 
-        
-@router.get("/lista", summary="Lista todas las categorías de un proveedor")
+# -------------------------------
+# DELETE CATEGORY
+# -------------------------------
+
+@router.delete("/eliminar/{category_id}", summary="Elimina o inactiva una categoría")
+async def delete_category(
+    category_id: int,
+    authorization: str = Header(..., description="Bearer Token")
+):
+    if authorization is None or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Token inválido o faltante")
+    
+    supplier_id = get_supplier_id_from_token(authorization)
+
+    pool = await get_pool()
+
+    async with pool.acquire() as conn:
+        try:
+            result = await conn.fetchval(
+                "SELECT fn_delete_category($1,$2);",
+                category_id,
+                supplier_id
+            )
+
+            if result is None:
+                raise HTTPException(500, "La función no devolvió datos")
+
+            # <-- ESTA LÍNEA SOLUCIONA EL PROBLEMA
+            parsed = json.loads(result)
+
+            return JSONResponse(content=parsed)
+
+        except Exception as e:
+            raise HTTPException(500, str(e))
+
+# -------------------------------
+# LIST CATEGORIES
+# -------------------------------
+@router.get("/listar", summary="Lista todas las categorías de un proveedor")
 async def get_categories(authorization: str = Header(..., description="Bearer Token")):
     # Valido token
     if authorization is None or not authorization.startswith("Bearer "):
