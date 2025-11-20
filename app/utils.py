@@ -91,3 +91,20 @@ def get_user_id_from_token(authorization: str) -> int:
 
     return user_id
 
+def get_supplier_id_from_token(authorization: str) -> int:
+    """Extrae el supplierId desde el token JWT."""
+
+    try:
+        token = authorization.split(" ")[1]
+    except Exception:
+        raise HTTPException(status_code=401, detail="Encabezado Authorization inválido")
+
+    payload = decode_token(token)
+    supplier_id = payload.get("supplierId")
+
+
+    if not supplier_id or supplier_id == 0:
+        raise HTTPException(status_code=401, detail="Token sin userId")
+
+    return supplier_id
+

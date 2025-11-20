@@ -17,7 +17,6 @@ class CompanyGenerate(BaseModel):
     externalId: str = Field(..., max_length=50, example="1234567890212", description="Identificador externo de la empresa")
     description: str = Field(..., max_length=256, example="Consultance services", description="Descripción de la empresa")
     status: str = Field('activo', description="Estado inicial de la empresa ('activo', 'suspendido', 'inactivo')")
-    supplierId: int = Field(..., example=1, description="ID del proveedor")
     email: EmailStr = Field(..., example="info@acme.com", description="Email de la empresa")
 
 class CompanyGenerateResponse(BaseModel):
@@ -64,3 +63,13 @@ class AssignClientRequest(BaseModel):
     userId: int
     customerId: int
     categorieId: List[int]
+
+class CategoryCreateRequest(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+class CategoryUpdateRequest(BaseModel):
+    newName: Optional[str] = None
+    newDescription: Optional[str] = None
+
+

@@ -1,9 +1,10 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Header
 from fastapi.responses import JSONResponse
 from datetime import date
 from typing import Dict, Any
 from models import CompanyGenerate, CompanyGenerateResponse
 from database import get_pool
+from utils import get_supplier_id_from_token
 
 router = APIRouter(
     prefix="/administrativa",
@@ -88,7 +89,19 @@ async def call_sp_insert_company(
         },
     }
 )
-async def generate_and_create_company(company_data: CompanyGenerate):
+async def generate_and_create_company(
+    company_data: CompanyGenerate,
+    authorization: str = Header(..., description="Bearer Token")):
+    # Valido token
+    if authorization is None or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Token inválido o faltante")
+
+    token = authorization
+
+    # Obtengo supplierId
+    supplier_id = get_supplier_id_from_token(token)
+    if supplier_id is None:
+        raise HTTPException(status_code=401, detail="No se pudo obtener supplierId del token")
     try:
         db_response = await call_sp_insert_company(
             company_data.name,
@@ -96,7 +109,7 @@ async def generate_and_create_company(company_data: CompanyGenerate):
             company_data.externalId,
             company_data.description,
             company_data.status,
-            company_data.supplierId,
+            supplier_id,
             company_data.email
         )
 
