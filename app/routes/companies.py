@@ -1,10 +1,12 @@
-from fastapi import APIRouter, HTTPException, Header
+import json
+from fastapi import APIRouter, HTTPException, Header, Query
 from fastapi.responses import JSONResponse
 from datetime import date
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from models import CompanyGenerate, CompanyGenerateResponse
 from database import get_pool
 from utils import get_supplier_id_from_token
+
 
 router = APIRouter(
     prefix="/administrativa",
@@ -127,3 +129,75 @@ async def generate_and_create_company(
             status_code=500,
             content={"info": f"Error al crear empresa: {e}", "id": 0}
         )
+
+
+@router.get("/listar-empresas",
+        summary="Listar compañías.",
+        description="Devuelve la lista de compañías pertenecientes a un proveedor.",
+        responses={
+        200: {
+            "description": "Ejecución exitosa",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "info": "Compañías listadas exitosamente",
+                        "companies": [
+                            
+                        ]
+                    }
+                }
+            },
+        },
+        500: {
+            "description": "Error interno del servidor",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "info": "Error en la BD: conexión fallida",
+                        "categories": []
+                    }
+                }
+            },
+        },
+    }
+)
+async def get_companies(
+    name: Optional[str] = Query(None, description="Nombre de la compañía"),
+    businessName: Optional[str] = Query(None, description="Nombre comercial"),
+    externalId: Optional[str] = Query(None, description="Descripción"),
+    companyId: Optional[str] = Query(None, description="ID de la compañía", example="1"),
+    status: Optional[str] = Query(None, description="Status", example="activo"),
+    limit: Optional[int] = Query(10, description="Límite de registros.", example=10),
+    offset: Optional[int] = Query(0, description="Desplazamiento de registros", example=0),
+    authorization: str = Header(description="Bearer Token", example="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
+):
+    supplier_id = get_supplier_id_from_token(authorization)
+
+    # Validación companyId
+    if companyId is not None and companyId.strip() != "":
+        if not companyId.isdigit():
+            raise HTTPException(
+                status_code=400,
+                detail="companyId debe ser un número entero"
+            )
+        companyId_int = int(companyId)
+    else:
+        companyId_int = None
+
+    try:
+        async with (await get_pool()).acquire() as conn:
+            rows = await conn.fetch(
+                "SELECT fn_get_companies($1,$2,$3,$4,$5,$6,$7,$8);",
+                supplier_id, name, businessName, companyId_int,
+                externalId, status, offset, limit
+            )
+
+            companies = [json.loads(row["fn_get_companies"]) for row in rows]
+
+            return {
+                "info": "Compañías listadas exitosamente",
+                "companies": companies
+            }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
