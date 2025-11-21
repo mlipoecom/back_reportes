@@ -6,8 +6,8 @@ from typing import Optional
 from database import get_pool
 
 router = APIRouter(
-    prefix="/administrativa",
-    tags=["Administrativas"]
+    prefix="/app",
+    tags=["App"]
 )
 
 @router.get("/logs",

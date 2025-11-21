@@ -4,8 +4,8 @@ from database import get_pool
 from models import UpdateStatusResponse
 
 router = APIRouter(
-    prefix="/administrativa",
-    tags=["Administrativas"]
+    prefix="/app",
+    tags=["App"]
 )
 
 @router.put(

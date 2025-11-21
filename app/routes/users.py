@@ -11,8 +11,8 @@ from models import AssignRolesRequest
 
 
 router = APIRouter(
-    prefix="/administrativa",
-    tags=["Administrativas"]
+    prefix="/proveedor",
+    tags=["Proveedores"]
 )
 
 
@@ -65,7 +65,7 @@ async def call_sp_insert_user(
 
 
 @router.post(
-    "/crear-usuario",
+    "/usuario/crear",
     summary="Crear usuario",
     description="Registrar un nuevo usuario de una empresa",
     response_model=UserGenerateResponse,
@@ -237,46 +237,5 @@ async def assign_roles(payload: AssignRolesRequest) -> str:
 
         except HTTPException as http_exc:
             raise http_exc
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.post("/asignar-cliente")
-async def assign_client(body: AssignClientRequest) -> Dict[str, Any]:
-
-    pool = await get_pool()
-
-    async with pool.acquire() as conn:
-        try:
-            async with conn.transaction():
-                cursor_name = "cur_assign_client"
-
-                # Ejecutar el procedimiento almacenado
-                await conn.execute(
-                    """
-                    CALL sp_assign_client($1, $2, $3, $4);
-                    """,
-                    body.userId,
-                    body.customerId,
-                    body.categorieId,
-                    cursor_name
-                )
-
-                # Leer el contenido del cursor
-                rows = await conn.fetch(f"FETCH ALL FROM {cursor_name}")
-
-                if not rows:
-                    raise HTTPException(status_code=500, detail="El procedimiento no devolvió datos.")
-
-                row = rows[0]
-
-                # Devolver respuesta
-                return {
-                    "message": row["message"],
-                    "insertedCount": row["inserted_count"],
-                    "insertedCategories": row["inserted_categories"],
-                    "failedCategories": row["failed_categories"]
-                }
-
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))

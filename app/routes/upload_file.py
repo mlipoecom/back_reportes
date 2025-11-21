@@ -8,8 +8,8 @@ from datetime import date
 from utils import get_company_id_from_token
 
 router = APIRouter(
-    prefix="/administrativa",
-    tags=["Administrativas"]
+    prefix="/archivos",
+    tags=["Archivos"]
 )
 
 

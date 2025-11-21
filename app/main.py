@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from database import get_pool, close_pool
-from routes import categories, companies, files, suppliers, users, auth, update_status, change_password, contact, logs, upload_file, customers
+from routes import ecom, categories, companies, files, suppliers, users, auth, update_status, change_password, contact, logs, upload_file, customers
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await get_pool()
@@ -24,6 +24,7 @@ app.add_middleware(
 )
 
 # Incluir routers
+app.include_router(ecom.router)
 app.include_router(categories.router)
 app.include_router(users.router)
 app.include_router(companies.router)

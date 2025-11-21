@@ -6,8 +6,8 @@ from mail import update_sent_mail
 from models import LoginRequest, TokenResponse
 
 router = APIRouter(
-    prefix="/api",
-    tags=["Api"]
+    prefix="/app",
+    tags=["App"]
 )
 
 @router.post("/login",
