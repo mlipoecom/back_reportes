@@ -1,14 +1,15 @@
-from fastapi import APIRouter, HTTPException, Header
+import json
+from fastapi import APIRouter, HTTPException, Header, Query
 from fastapi.responses import JSONResponse
 from datetime import date
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from models import SupplierGenerate, SupplierGenerateResponse
 from database import get_pool
 from utils import get_user_id_from_token
 
 router = APIRouter(
-    prefix="/administrativa",
-    tags=["Administrativas"]
+    prefix="/ecom",
+    tags=["Ecom"]
 )
 
 async def call_sp_insert_supplier(
@@ -43,7 +44,11 @@ async def call_sp_insert_supplier(
         return {"info": rows[0].get("info"), "id": rows[0].get("id")}
     raise HTTPException(status_code=500, detail="SP no devolvió datos")
 
-@router.post("/crear-proveedor",
+# -------------------------------
+# SUPPLIER CREATE
+# -------------------------------
+
+@router.post("/proveedores/crear",
             summary= "Crear proveedor",
             description="Registrar un nuevo proveedor",
             response_model=SupplierGenerateResponse,
@@ -108,3 +113,175 @@ async def generate_and_create_supplier(
         return SupplierGenerateResponse(**db_response)
     except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error al crear proveedor: {e}")
+    
+# -------------------------------
+# SUPPLIER LIST
+# -------------------------------
+
+@router.get(
+    "/proveedores/listar",
+    summary="Listar proveedores",
+    description="Devuelve la lista de proveedores filtrados por diferentes criterios.",
+    responses={
+        200: {
+            "description": "Ejecución exitosa",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "info": "Proveedores listados exitosamente",
+                        "suppliers": [
+                            {
+                                "id": 1,
+                                "name": "Proveedor A",
+                                "businessName": "Proveedor A S.A.",
+                                "externalId": "EXT001",
+                                "description": "Proveedor mayorista",
+                                "createdAt": "2024-01-10",
+                                "status": "ACTIVE",
+                                "email": "contacto@proveedora.com",
+                                "createdBy": "USR001"
+                            }
+                        ]
+                    }
+                }
+            },
+        },
+        500: {
+            "description": "Error interno",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "info": "Error en la BD",
+                        "suppliers": []
+                    }
+                }
+            },
+        },
+    }
+)
+async def get_suppliers(
+    id: Optional[int] = Query(None, description="Filtrar por ID del proveedor."),
+    name: Optional[str] = Query(None, description="Filtrar por nombre del proveedor."),
+    businessName: Optional[str] = Query(None, description="Filtrar por razón social."),
+    externalId: Optional[str] = Query(None, description="Filtrar por ID externo."),
+    limit: Optional[int] = Query(10, description="Cantidad máxima de registros a devolver."),
+    offset: Optional[int] = Query(0, description="Cantidad de registros a omitir antes de comenzar la lista."),
+    authorization: str = Header(..., description="Bearer Token")
+):
+    # Valido token
+    if authorization is None or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Token inválido o faltante")
+    
+    try:
+        async with (await get_pool()).acquire() as conn:
+
+            rows = await conn.fetch(
+                "SELECT fn_get_supplier($1,$2,$3,$4,$5,$6);",
+                id,
+                name,
+                businessName,
+                externalId,
+                limit,
+                offset
+            )
+
+            # Convertir jsonb a dict
+            suppliers = [record["fn_get_supplier"] for record in rows]
+
+            return {
+                "info": "Proveedores listados exitosamente",
+                "proveedores": suppliers
+            }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
+
+
+# -------------------------------
+# SUPPLIER DELETE
+# -------------------------------
+
+@router.delete(
+    "/proveedores/{supplierId}/eliminar",
+    summary="Eliminar o inactivar proveedor",
+    description=(
+        "Elimina físicamente un proveedor si no tiene compañías asociadas. "
+        "Si tiene compañías, lo marca como inactivo. "
+        "Solo permite eliminar proveedores creados por el usuario que ejecuta."
+    ),
+    responses={
+        200: {
+            "description": "Resultado de la operación",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "message": "Proveedor eliminado correctamente",
+                        "affectedRows": 1
+                    }
+                }
+            },
+        },
+        404: {
+            "description": "Proveedor no encontrado",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "message": "El proveedor no existe",
+                        "affectedRows": 0
+                    }
+                }
+            },
+        },
+        500: {
+            "description": "Error interno",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "message": "Error en la BD",
+                        "affectedRows": 0
+                    }
+                }
+            },
+        },
+    }
+)
+async def delete_supplier(
+    supplierId: int,
+    authorization: str = Header(..., description="Bearer Token")
+):
+    # Validar token
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Token inválido o faltante")
+
+    user_id = get_user_id_from_token(authorization) 
+
+    if user_id is None:
+        raise HTTPException(status_code=401, detail="No se pudo obtener userId del token")
+
+    try:
+        async with (await get_pool()).acquire() as conn:
+            row = await conn.fetchrow(
+                "SELECT fn_delete_supplier($1, $2);",
+                user_id,
+                supplierId
+            )
+
+            if row is None:
+                raise HTTPException(status_code=500, detail="La función no devolvió datos")
+
+            result = json.loads(row["fn_delete_supplier"])
+
+            # Si el SP devuelve "El proveedor no existe", lo trato como 404
+            if result.get("affectedRows") == 0:
+                return JSONResponse(status_code=404, content=result)
+
+            return result
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
