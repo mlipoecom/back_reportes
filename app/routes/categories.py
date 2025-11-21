@@ -1,8 +1,9 @@
-from fastapi import APIRouter, HTTPException, Header
+from fastapi import APIRouter, HTTPException, Header, Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from database import get_pool
 from models import CategoryCreateRequest, CategoryUpdateRequest
+from typing import Optional
 from utils import get_supplier_id_from_token, get_user_id_from_token
 import json
 
@@ -152,7 +153,11 @@ async def delete_category(
 # LIST CATEGORIES
 # -------------------------------
 @router.get("/categoria/listar", summary="Lista todas las categorías de un proveedor")
-async def get_categories(authorization: str = Header(..., description="Bearer Token")):
+async def get_categories(
+    name: Optional[str] = Query(None, description="Nombre de la categoría"),
+    createdBy: Optional[int] = Query(None, description="ID del creador de la categoría"),
+    status: Optional[str] = Query(None, description="Status de l acategoría"),
+    authorization: str = Header(..., description="Bearer Token")):
     # Valido token
     if authorization is None or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Token inválido o faltante")
@@ -170,9 +175,12 @@ async def get_categories(authorization: str = Header(..., description="Bearer To
         try:
             rows = await conn.fetch(
                 """
-                SELECT * FROM fn_get_categories($1)
+                SELECT * FROM fn_get_categories($1, $2, $3, $4)
                 """,
-                supplier_id
+                supplier_id,
+                name,
+                createdBy,
+                status
             )
 
             # Conversión

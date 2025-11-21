@@ -5,7 +5,7 @@ from datetime import date
 from typing import Dict, Any
 from models import AssignClientRequest
 from database import get_pool
-from utils import get_user_id_from_token
+from utils import get_user_id_from_token, get_company_id_from_token
 
 
 router = APIRouter(

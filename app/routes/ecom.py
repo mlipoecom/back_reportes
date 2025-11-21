@@ -131,16 +131,16 @@ async def generate_and_create_supplier(
                         "info": "Proveedores listados exitosamente",
                         "suppliers": [
                             {
-                                "id": 1,
-                                "name": "Proveedor A",
-                                "businessName": "Proveedor A S.A.",
-                                "externalId": "EXT001",
-                                "description": "Proveedor mayorista",
-                                "createdAt": "2024-01-10",
-                                "status": "ACTIVE",
-                                "email": "contacto@proveedora.com",
-                                "createdBy": "USR001"
-                            }
+                            "id": 1,
+                            "name": "Ecom",
+                            "email": "info@ecom.com.uy",
+                            "status": "activo",
+                            "createdAt": "2025-10-29",
+                            "createdBy": "provAdmin",
+                            "externalId": "Ecom",
+                            "description": "Desc",
+                            "businessName": "Ecom Center SRL"
+                        }
                         ]
                     }
                 }
@@ -186,7 +186,7 @@ async def get_suppliers(
             )
 
             # Convertir jsonb a dict
-            suppliers = [record["fn_get_supplier"] for record in rows]
+            suppliers = [json.loads(record["fn_get_supplier"]) for record in rows]
 
             return {
                 "info": "Proveedores listados exitosamente",
