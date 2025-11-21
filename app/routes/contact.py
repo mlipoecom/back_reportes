@@ -4,8 +4,8 @@ from database import get_pool
 from mail import send_email_via_smtp, update_sent_mail
 
 router = APIRouter(
-    prefix="/api",
-    tags=["Api"]
+    prefix="/app",
+    tags=["App"]
 )
 
 async def get_supplier_contact(username: str) -> dict:
@@ -29,7 +29,7 @@ async def get_supplier_contact(username: str) -> dict:
                 raise HTTPException(status_code=404, detail=f"Error al obtener datos del proveedor: {e}")
 
 
-@router.post("/contact",
+@router.post("/contacto",
              summary="Contactar vendedor",
              description="Envía un correo predefinido al proveedor asociado al usuario recibido.",
              responses={

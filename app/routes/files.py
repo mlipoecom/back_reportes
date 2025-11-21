@@ -7,8 +7,8 @@ from database import get_pool
 from utils import get_user_id_from_token, get_company_id_from_token
 
 router = APIRouter(
-    prefix="/api",
-    tags=["Api"]
+    prefix="/archivos",
+    tags=["Archivos"]
 )
 
 async def call_fn_get_archivos(
@@ -57,7 +57,7 @@ async def call_fn_get_archivos(
 
 
 @router.get(
-    "/archivos",
+    "/listar",
     summary="Obtener archivos",
     description="Devuelve los archivos pertenecientes al cliente, filtrados por categorías, fechas y nombres, junto con información de la compañía.",
     responses={
@@ -144,7 +144,7 @@ async def get_archivos(
 
 
 @router.get(
-    "/archivos/{file_id}/descargar",
+    "/{file_id}/descargar",
     summary="Descargar archivo",
     description="Descarga un archivo de la compañía.",
     responses={

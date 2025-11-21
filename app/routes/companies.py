@@ -2,78 +2,83 @@ import json
 from fastapi import APIRouter, HTTPException, Header, Query
 from fastapi.responses import JSONResponse
 from datetime import date
-from typing import Dict, Any, Optional
-from models import CompanyGenerate, CompanyGenerateResponse
+from typing import Dict, Any
+from models import AssignClientRequest
 from database import get_pool
-from utils import get_supplier_id_from_token
+from utils import get_user_id_from_token
 
 
 router = APIRouter(
-    prefix="/administrativa",
-    tags=["Administrativas"]
+    prefix="/empresa",
+    tags=["Empresas"]
 )
 
-async def call_sp_insert_company(
-    p_name: str,
-    p_business_name: str,
-    p_external_id: str,
-    p_description: str,
-    p_status: str,
-    p_supplier_id: int,
-    p_email: str
-) -> Dict[str, Any]:
-    p_creation_date = date.today()
-    cursor_name = "company_insert_result"
+@router.post("/asignar-cliente")
+async def assign_client(body: AssignClientRequest) -> Dict[str, Any]:
 
-    params = (
-        p_name, p_business_name, p_external_id, p_description,
-        p_creation_date, p_status, p_supplier_id, p_email, cursor_name
-    )
-    try:
-        async with (await get_pool()).acquire() as conn:
+    pool = await get_pool()
+
+    async with pool.acquire() as conn:
+        try:
             async with conn.transaction():
+                cursor_name = "cur_assign_client"
+
+                # Ejecutar el procedimiento almacenado
                 await conn.execute(
-                    "CALL sp_insert_company($1,$2,$3,$4,$5,$6,$7,$8,$9);",
-                    *params
+                    """
+                    CALL sp_assign_client($1, $2, $3, $4);
+                    """,
+                    body.userId,
+                    body.customerId,
+                    body.categorieId,
+                    cursor_name
                 )
-                rows = await conn.fetch(f'FETCH ALL IN "{cursor_name}";')
-    except Exception as e:
-        msg = str(e).split('\n')[0].strip()
-        raise HTTPException(status_code=500, detail=f"Error en la BD: {msg}")
 
-    if not rows:
-        raise HTTPException(status_code=500, detail="SP no devolvió datos")
+                # Leer el contenido del cursor
+                rows = await conn.fetch(f"FETCH ALL FROM {cursor_name}")
 
-    info = rows[0].get("info")
-    id_val = rows[0].get("id", 0)
+                if not rows:
+                    raise HTTPException(status_code=500, detail="El procedimiento no devolvió datos.")
 
-    return {"info": info, "id": id_val}
+                row = rows[0]
 
+                # Devolver respuesta
+                return {
+                    "message": row["message"],
+                    "insertedCount": row["inserted_count"],
+                    "insertedCategories": row["inserted_categories"],
+                    "failedCategories": row["failed_categories"]
+                }
 
-@router.post(
-    "/crear-empresa",
-    summary= "Crear empresa",
-    description="Registrar una nueva empresa",
-    response_model=CompanyGenerateResponse,
-    responses={
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+        
+@router.get("/get-customers",
+            summary="Listar clientes",
+            description="Devuelve la lista de clientes de la compañía.",
+            responses={
         200: {
             "description": "Ejecución exitosa",
             "content": {
                 "application/json": {
                     "example": {
-                        "info": "Compañía creada exitosamente.",
-                        "id": 1
-                    }
-                }
-            },
-        },
-        400: {
-            "description": "Ejecución fallida",
-            "content": {
-                "application/json": {
-                    "example": {
-                        "info": "Ya existe una compañía con el mismo ID externo.",
-                        "id": 0
+                        "info": "Clientes listados exitosamente",
+                        "customers": [
+                            {
+                                "id": 1,
+                                "name": "Cliente 1",
+                                "status": "activo",
+                                "companyId": 1,
+                                "businessName": "Cliente 1 SA",
+                            },
+                            {
+                                "id": 2,
+                                "name": "Cliente 2",
+                                "status": "activo",
+                                "companyId": 1,
+                                "businessName": "Cliente 2 SA",
+                            }
+                        ]
                     }
                 }
             },
@@ -84,65 +89,114 @@ async def call_sp_insert_company(
                 "application/json": {
                     "example": {
                         "info": "Error en la BD: conexión fallida",
-                        "id": 0
+                        "customers": []
                     }
                 }
             },
         },
     }
 )
-async def generate_and_create_company(
-    company_data: CompanyGenerate,
-    authorization: str = Header(..., description="Bearer Token")):
-    # Valido token
-    if authorization is None or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Token inválido o faltante")
-
-    token = authorization
-
-    # Obtengo supplierId
-    supplier_id = get_supplier_id_from_token(token)
-    if supplier_id is None:
-        raise HTTPException(status_code=401, detail="No se pudo obtener supplierId del token")
+async def get_customers(    
+    authorization: str = Header(..., description="Bearer Token", example="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."),
+):
+    company_id = get_company_id_from_token(authorization)
     try:
-        db_response = await call_sp_insert_company(
-            company_data.name,
-            company_data.businessName,
-            company_data.externalId,
-            company_data.description,
-            company_data.status,
-            supplier_id,
-            company_data.email
-        )
-
-        if db_response["id"] == 0 or (
-            db_response["info"] and "error" in db_response["info"].lower()
-        ):
-            return JSONResponse(status_code=400, content=db_response)
-
-        return CompanyGenerateResponse(**db_response)
-
-    except HTTPException as e:
-        raise e
+        async with (await get_pool()).acquire() as conn:
+            rows = await conn.fetch("SELECT fn_get_customers($1);", company_id)
+            customers = [json.loads(row["fn_get_customers"]) for row in rows]
+            return JSONResponse(
+                content={
+                    "info": "Clientes listados exitosamente",
+                    "customers": customers,
+                }
+            )
     except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={"info": f"Error al crear empresa: {e}", "id": 0}
-        )
+        raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/listar-empresas",
-        summary="Listar compañías.",
-        description="Devuelve la lista de compañías pertenecientes a un proveedor.",
+@router.get("/get-customers-by-company-user",
+            summary="Listar clientes asignados a un usuario de la compañía.",
+            description="Devuelve la lista de clientes de la compañía por usuario.",
+            responses={
+        200: {
+            "description": "Ejecución exitosa",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "info": "Clientes listados exitosamente",
+                        "customers": [
+                            {
+                                "id": 1,
+                                "name": "Cliente 1",
+                                "status": "activo",
+                                "companyId": 1,
+                                "businessName": "Cliente 1 SA",
+                            },
+                            {
+                                "id": 2,
+                                "name": "Cliente 2",
+                                "status": "activo",
+                                "companyId": 1,
+                                "businessName": "Cliente 2 SA",
+                            }
+                        ]
+                    }
+                }
+            },
+        },
+        500: {
+            "description": "Error interno del servidor",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "info": "Error en la BD: conexión fallida",
+                        "customers": []
+                    }
+                }
+            },
+        },
+    }
+)
+async def get_customers_by_company_user(
+    authorization: str = Header(..., description="Bearer Token", example="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."),
+):
+    company_user_id = get_user_id_from_token(authorization)
+    try:
+        print("company_user_id: ", company_user_id)
+        async with (await get_pool()).acquire() as conn:
+            rows = await conn.fetch("SELECT fn_get_customers_by_company_user($1);", company_user_id)
+            customers = [json.loads(row["fn_get_customers_by_company_user"]) for row in rows]
+            return JSONResponse(
+                content={
+                    "info": "Clientes listados exitosamente",
+                    "customers": customers,
+                }
+            )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/get-categories-by-customer-and-company-user",
+        summary="Listar categorías de informes que contrató un cliente.",
+        description="Devuelve la lista de categorías de informes que contrató un cliente para un usuario de la compañía.",
         responses={
         200: {
             "description": "Ejecución exitosa",
             "content": {
                 "application/json": {
                     "example": {
-                        "info": "Compañías listadas exitosamente",
-                        "companies": [
-                            
+                        "info": "Categorías listadas exitosamente",
+                        "categories": [
+                            {
+                                "id": 1,
+                                "name": "DDOS",
+                                "description": "DDOS de la compañía",
+                            },
+                            {
+                                "id": 2,
+                                "name": "Pentesting",
+                                "description": "Pentesting de la compañía",
+                            }
                         ]
                     }
                 }
@@ -161,43 +215,21 @@ async def generate_and_create_company(
         },
     }
 )
-async def get_companies(
-    name: Optional[str] = Query(None, description="Nombre de la compañía"),
-    businessName: Optional[str] = Query(None, description="Nombre comercial"),
-    externalId: Optional[str] = Query(None, description="Descripción"),
-    companyId: Optional[str] = Query(None, description="ID de la compañía", example="1"),
-    status: Optional[str] = Query(None, description="Status", example="activo"),
-    limit: Optional[int] = Query(10, description="Límite de registros.", example=10),
-    offset: Optional[int] = Query(0, description="Desplazamiento de registros", example=0),
-    authorization: str = Header(description="Bearer Token", example="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
+async def get_categories_by_customer_and_company_user(
+    authorization: str = Header(..., description="Bearer Token", example="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."),
+    customerId: int = Query(..., description="ID del cliente", example=1),
 ):
-    supplier_id = get_supplier_id_from_token(authorization)
-
-    # Validación companyId
-    if companyId is not None and companyId.strip() != "":
-        if not companyId.isdigit():
-            raise HTTPException(
-                status_code=400,
-                detail="companyId debe ser un número entero"
-            )
-        companyId_int = int(companyId)
-    else:
-        companyId_int = None
-
+    company_user_id = get_user_id_from_token(authorization)
     try:
         async with (await get_pool()).acquire() as conn:
-            rows = await conn.fetch(
-                "SELECT fn_get_companies($1,$2,$3,$4,$5,$6,$7,$8);",
-                supplier_id, name, businessName, companyId_int,
-                externalId, status, offset, limit
+            rows = await conn.fetch("SELECT fn_get_categories_by_customer_and_company_user($1, $2);", company_user_id, customerId)
+            categories = [json.loads(row["fn_get_categories_by_customer_and_company_user"]) for row in rows]
+            print("categories: ", categories)
+            return JSONResponse(
+                content={
+                    "info": "Categorías listadas exitosamente",
+                    "categories": categories,
+                }
             )
-
-            companies = [json.loads(row["fn_get_companies"]) for row in rows]
-
-            return {
-                "info": "Compañías listadas exitosamente",
-                "companies": companies
-            }
-
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

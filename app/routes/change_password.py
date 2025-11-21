@@ -7,11 +7,11 @@ from utils import generate_safe_password, get_supplier_id_from_token
 from database import get_pool
 
 router = APIRouter(
-    prefix="/administrativa",
-    tags=["Administrativas"]
+    prefix="/proveedor",
+    tags=["Proveedores"]
 )
 
-@router.put("/usuario/{id}/password",
+@router.put("/usuario/{id}/cambiar-password",
             summary="Cambiar password",
             description="Genera un nuev password y la envía por correo al usuario",
             responses={

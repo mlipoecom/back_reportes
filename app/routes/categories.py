@@ -7,14 +7,14 @@ from utils import get_supplier_id_from_token, get_user_id_from_token
 import json
 
 router = APIRouter(
-    prefix="/categoria",
-    tags=["Categorías"]
+    prefix="/proveedor",
+    tags=["Proveedores"]
 )
 
 # -------------------------------
 # CREATE CATEGORY
 # -------------------------------
-@router.post("/crear")
+@router.post("/categoria/crear")
 async def create_category(
     body: CategoryCreateRequest,
     authorization: str = Header(..., description="Bearer Token")
@@ -63,7 +63,7 @@ async def create_category(
 # -------------------------------
 # UPDATE CATEGORY
 # -------------------------------
-@router.put("/editar/{category_id}")
+@router.put("/categoria/{category_id}/editar")
 async def update_category(
     category_id: int,
     body: CategoryUpdateRequest,
@@ -117,7 +117,7 @@ async def update_category(
 # DELETE CATEGORY
 # -------------------------------
 
-@router.delete("/eliminar/{category_id}", summary="Elimina o inactiva una categoría")
+@router.delete("/categoria/{category_id}/eliminar", summary="Elimina o inactiva una categoría")
 async def delete_category(
     category_id: int,
     authorization: str = Header(..., description="Bearer Token")
@@ -151,7 +151,7 @@ async def delete_category(
 # -------------------------------
 # LIST CATEGORIES
 # -------------------------------
-@router.get("/listar", summary="Lista todas las categorías de un proveedor")
+@router.get("/categoria/listar", summary="Lista todas las categorías de un proveedor")
 async def get_categories(authorization: str = Header(..., description="Bearer Token")):
     # Valido token
     if authorization is None or not authorization.startswith("Bearer "):
