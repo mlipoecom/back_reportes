@@ -75,14 +75,16 @@ async def upload_file(
     authorization: str = Header(..., description="Bearer Token", example="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."),
     empresa: int = Form(...),
     categoria: str = Form(...),
-    dia: str = Form(...),
-    mes: int = Form(...),
-    anio: int = Form(...),
+    fecha_reporte: str = Form(...),
     file: UploadFile = None
 ):
     if not file:
         raise HTTPException(status_code=400, detail="Debe incluir un archivo")
 
+    fecha_reporte_dt = date.strptime(fecha_reporte, "%Y-%m-%d")
+    anio = fecha_reporte_dt.year
+    mes = fecha_reporte_dt.month
+    dia = fecha_reporte_dt.day
     _, ext = os.path.splitext(file.filename)
     nuevo_nombre = f"{empresa}_{categoria}_{mes}_{anio}{ext}"
     key = f"{empresa}/{categoria}/{nuevo_nombre}"
