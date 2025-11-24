@@ -9,7 +9,7 @@ from utils import get_user_id_from_token
 from routes.categories import get_category_by_id
 from routes.companies import get_customer_by_id
 router = APIRouter(
-    prefix="/archivos",
+    prefix="/app/archivos",
     tags=["Archivos"]
 )
 
