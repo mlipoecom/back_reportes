@@ -1,0 +1,1496 @@
+{
+	"info": {
+		"_postman_id": "43e8b11d-0433-427a-abcb-5991eab3046b",
+		"name": "portal archivos",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "26463482"
+	},
+	"item": [
+		{
+			"name": "000_ecom",
+			"item": [
+				{
+					"name": "crear-proveedor",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"name\": \"AJAX3\",\r\n  \"business_name\": \"AJAX3 SA\",\r\n  \"external_id\": \"AJAX4\",\r\n  \"description\": \"Desc\",\r\n  \"status\": \"activo\",\r\n  \"email\": \"ajax3@ajax3.com\"\r\n}"
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8000/administrativa/crear-proveedor",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"administrativa",
+								"crear-proveedor"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "proveedores/listar",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8000/ecom/proveedores/listar?limit=10&offset=0",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"ecom",
+								"proveedores",
+								"listar"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								}
+							]
+						},
+						"description": "Generated from cURL: curl -X 'GET' \\\r\n  'http://localhost:8000/ecom/proveedores/listar?limit=10&offset=0' \\\r\n  -H 'accept: application/json'"
+					},
+					"response": []
+				},
+				{
+					"name": "proveedores/ID/eliminar",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8000/ecom/proveedores/1/eliminar",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"ecom",
+								"proveedores",
+								"1",
+								"eliminar"
+							]
+						},
+						"description": "Generated from cURL: curl -X 'DELETE' \\\r\n  'http://localhost:8000/ecom/proveedores/1/eliminar' \\\r\n  -H 'accept: application/json'"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "001_proveedores",
+			"item": [
+				{
+					"name": "categoria/crear-editar",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"mode\": \"CREATE\",\r\n  \"name\": \"prueba2\",\r\n  \"description\": \"string\",\r\n  \"userId\": 19\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/categoria/crear-editar",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"categoria",
+								"crear-editar"
+							]
+						},
+						"description": "Generated from cURL: curl -X 'POST' \\\r\n  'http://localhost:8000/categoria/crear-editar' \\\r\n  -H 'accept: application/json' \\\r\n  -H 'Content-Type: application/json' \\\r\n  -d '{\r\n  \"mode\": \"CREATE\",\r\n  \"name\": \"prueba2\",\r\n  \"description\": \"string\",\r\n  \"userId\": 19\r\n}'"
+					},
+					"response": []
+				},
+				{
+					"name": "categoria/lista",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8000/proveedor/categoria/listar?name=pentesting",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"proveedor",
+								"categoria",
+								"listar"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "pentesting"
+								}
+							]
+						},
+						"description": "Generated from cURL: curl -X 'GET' \\\r\n  'http://localhost:8000/categoria/lista' \\\r\n  -H 'accept: application/json'"
+					},
+					"response": []
+				},
+				{
+					"name": "categoria/editar/20",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"newName\": \"edit4\",\r\n  \"newDescription\": \"edit4\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/proveedor/categoria/21/editar",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"proveedor",
+								"categoria",
+								"21",
+								"editar"
+							]
+						},
+						"description": "Generated from cURL: curl -X 'PUT' \\\r\n  'http://localhost:8000/categoria/editar/20' \\\r\n  -H 'accept: application/json' \\\r\n  -H 'Content-Type: application/json' \\\r\n  -d '{\r\n  \"name\": \"edit3\",\r\n  \"description\": \"edit4\"\r\n}'"
+					},
+					"response": []
+				},
+				{
+					"name": "categoria/eliminar/1",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8000/proveedor/categoria/21/eliminar",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"proveedor",
+								"categoria",
+								"21",
+								"eliminar"
+							]
+						},
+						"description": "Generated from cURL: curl -X 'DELETE' \\\r\n  'http://localhost:8000/categoria/eliminar/1' \\\r\n  -H 'accept: application/json'"
+					},
+					"response": []
+				},
+				{
+					"name": "crear-empresa",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let jsonData;\r",
+									"try {\r",
+									"    jsonData = pm.response.json();\r",
+									"} catch (e) {\r",
+									"    jsonData = null;\r",
+									"}\r",
+									"\r",
+									"function extractId(obj) {\r",
+									"    if (!obj || typeof obj !== 'object') return undefined;\r",
+									"    if (obj.id !== undefined) return obj.id;\r",
+									"    if (obj.data && obj.data.id !== undefined) return obj.data.id;\r",
+									"    if (obj.result && obj.result.id !== undefined) return obj.result.id;\r",
+									"    return undefined;\r",
+									"}\r",
+									"\r",
+									"const id = extractId(jsonData);\r",
+									"let validId = false;\r",
+									"if (typeof id === 'number' && isFinite(id)) {\r",
+									"    pm.collectionVariables.set('comapnyId', id);\r",
+									"    validId = true;\r",
+									"} else if (typeof id === 'string' && id.trim().length > 0) {\r",
+									"    pm.collectionVariables.set('comapnyId', id);\r",
+									"    validId = true;\r",
+									"}\r",
+									"\r",
+									"pm.test('Response status is 2xx', function () {\r",
+									"    pm.expect(pm.response.code).to.be.within(200, 299);\r",
+									"});\r",
+									"pm.test('Identifier (id) was found and valid', function () {\r",
+									"    pm.expect(validId, 'A valid id was found in the response').to.be.true;\r",
+									"});\r",
+									"\r",
+									"if (validId) {\r",
+									"    console.log('comapnyId set to:', id);\r",
+									"} else {\r",
+									"    console.log('comapnyId was not set. Response body:', jsonData);\r",
+									"}\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"name\": \"Digisecuritas2\",\r\n  \"businessName\": \"Digisecuritas2 Telecomunicaciones\",\r\n  \"externalId\": \"Digisecuritas2\",\r\n  \"description\": \"Desc\",\r\n  \"email\": \"info@digisecuritas2.com\"\r\n}"
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8000/proveedor/empresa/crear",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"proveedor",
+								"empresa",
+								"crear"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "listar-empresas",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8000/proveedor/empresa/listar?limit=1&offset=1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"proveedor",
+								"empresa",
+								"listar"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "1"
+								},
+								{
+									"key": "offset",
+									"value": "1"
+								}
+							]
+						},
+						"description": "Generated from cURL: curl -X 'GET' \\\r\n  'http://localhost:8000/administrativa/listar-empresas?name=Acme&businessName=Acme%20SA&externalId=Sucursal%20Buceo&companyId=1&status=activo' \\\r\n  -H 'accept: application/json'"
+					},
+					"response": []
+				},
+				{
+					"name": "usuario/crear",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let jsonData;\r",
+									"try {\r",
+									"    jsonData = pm.response.json();\r",
+									"} catch (e) {\r",
+									"    jsonData = null;\r",
+									"}\r",
+									"\r",
+									"function extractId(obj) {\r",
+									"    if (!obj || typeof obj !== 'object') return undefined;\r",
+									"    if (obj.id !== undefined) return obj.id;\r",
+									"    if (obj.data && obj.data.id !== undefined) return obj.data.id;\r",
+									"    if (obj.result && obj.result.id !== undefined) return obj.result.id;\r",
+									"    return undefined;\r",
+									"}\r",
+									"\r",
+									"const id = extractId(jsonData);\r",
+									"let validId = false;\r",
+									"if (typeof id === 'number' && isFinite(id)) {\r",
+									"    pm.collectionVariables.set('userId', id);\r",
+									"    validId = true;\r",
+									"} else if (typeof id === 'string' && id.trim().length > 0) {\r",
+									"    pm.collectionVariables.set('userId', id);\r",
+									"    validId = true;\r",
+									"}\r",
+									"\r",
+									"pm.test('Response status is 2xx', function () {\r",
+									"    pm.expect(pm.response.code).to.be.within(200, 299);\r",
+									"});\r",
+									"pm.test('Identifier (id) was found and valid', function () {\r",
+									"    pm.expect(validId, 'A valid id was found in the response').to.be.true;\r",
+									"});\r",
+									"\r",
+									"if (validId) {\r",
+									"    console.log('userId set to:', id);\r",
+									"} else {\r",
+									"    console.log('userId was not set. Response body:', jsonData);\r",
+									"}\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"Probando\",\r\n    \"lastName\": \"deNuevo\",\r\n    \"email\": \"martin.liporace@ecom.com.uy\",\r\n    \"externalId\": \"prrueba\",\r\n    \"supplierId\": 1,\r\n    \"status\": \"activo\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/proveedor/usuario/crear",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"proveedor",
+								"usuario",
+								"crear"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "asignar-roles",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"user_id\": 1,\r\n  \"role_id\": 1\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/proveedor/asignar-roles",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"proveedor",
+								"asignar-roles"
+							]
+						},
+						"description": "Generated from cURL: curl -X 'POST' \\\r\n  'http://localhost:8000/proveedor/asignar-roles' \\\r\n  -H 'accept: application/json' \\\r\n  -H 'Content-Type: application/json' \\\r\n  -d '{\r\n  \"user_id\": 1,\r\n  \"role_id\": 1\r\n}'"
+					},
+					"response": []
+				},
+				{
+					"name": "change-password",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/proveedor/usuario/{{user}}/cambiar-password",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"proveedor",
+								"usuario",
+								"{{user}}",
+								"cambiar-password"
+							]
+						},
+						"description": "Generated from cURL: curl -X 'POST' \\\r\n  'http://localhost:8000/administrativa/change-password' \\\r\n  -H 'accept: application/json' \\\r\n  -H 'Content-Type: application/json' \\\r\n  -d '{\r\n  \"userId\": \"JohnDoe\"\r\n}'"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "002_empresas",
+			"item": [
+				{
+					"name": "asignar-cliente",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"user_id\": 19,\r\n  \"customer_id\": 1,\r\n  \"categorie_id\": [\r\n    1\r\n  ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8000/administrativa/asignar-cliente",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"administrativa",
+								"asignar-cliente"
+							]
+						},
+						"description": "Generated from cURL: curl -X 'POST' \\\r\n  'http://localhost:8000/administrativa/asignar-cliente' \\\r\n  -H 'accept: application/json' \\\r\n  -H 'Content-Type: application/json' \\\r\n  -d '{\r\n  \"user_id\": 19,\r\n  \"customer_id\": 1,\r\n  \"categorie_id\": [\r\n    1\r\n  ]\r\n}'"
+					},
+					"response": []
+				},
+				{
+					"name": "get-customers",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8000/empresa/get-customers",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"empresa",
+								"get-customers"
+							]
+						},
+						"description": "Generated from cURL: curl -X 'GET' \\\r\n  'http://localhost:8000/empresa/get-customers' \\\r\n  -H 'accept: application/json'"
+					},
+					"response": []
+				},
+				{
+					"name": "get-customers-by-company-user",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8000/empresa/get-customers-by-company-user",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"empresa",
+								"get-customers-by-company-user"
+							]
+						},
+						"description": "Generated from cURL: curl -X 'GET' \\\r\n  'http://localhost:8000/empresa/get-customers-by-company-user' \\\r\n  -H 'accept: application/json'"
+					},
+					"response": []
+				},
+				{
+					"name": "get-categories-by-customer-and-company-user",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8000/empresa/get-categories-by-customer-and-company-user?customerId=1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"empresa",
+								"get-categories-by-customer-and-company-user"
+							],
+							"query": [
+								{
+									"key": "customerId",
+									"value": "1"
+								}
+							]
+						},
+						"description": "Generated from cURL: curl -X 'GET' \\\r\n  'http://localhost:8000/empresa/get-categories-by-customer-and-company-user?customerId=1' \\\r\n  -H 'accept: application/json'"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "003_app",
+			"item": [
+				{
+					"name": "login exitoso",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let jsonData;",
+									"let token;",
+									"",
+									"// 1. Parse JSON response safely",
+									"try {",
+									"    jsonData = pm.response.json();",
+									"} catch (e) {",
+									"    jsonData = {};",
+									"    console.error('Response is not valid JSON:', e);",
+									"}",
+									"",
+									"// 2. Extract token property with fallback",
+									"if (jsonData) {",
+									"    token = jsonData.accessToken || jsonData.token || jsonData.access_token;",
+									"}",
+									"",
+									"// 3. Set collection variable if token found",
+									"if (token) {",
+									"    pm.collectionVariables.set('token', token);",
+									"}",
+									"",
+									"// 4. Assertions",
+									"pm.test('Response status code is 2xx', function () {",
+									"    pm.expect(pm.response.code).to.be.within(200, 299);",
+									"});",
+									"pm.test('Token is present in response', function () {",
+									"    pm.expect(token, 'Token should be present in response').to.exist;",
+									"});",
+									"",
+									"// 5. Log helpful message",
+									"if (token) {",
+									"    console.log('Token extracted and set as collection variable:', token);",
+									"} else {",
+									"    console.warn('No token found in response. Check property names (accessToken, token, access_token).');",
+									"}",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"usuario\": \"provAdmin\",\r\n  \"contraseña\": \"Bzuu%N7Lmj\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8000/app/login",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"app",
+								"login"
+							]
+						},
+						"description": "Generated from cURL: curl -X POST \"http://127.0.0.1:8000/login\" \\\r\n-H \"Content-Type: application/json\" \\\r\n-d '{\r\n  \"username\": \"usuario_demo\",\r\n  \"password\": \"clave123\"\r\n}'\r\n"
+					},
+					"response": []
+				},
+				{
+					"name": "login falla usuario",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let jsonData;",
+									"let detail;",
+									"",
+									"// 1. Parseo Json",
+									"try {",
+									"    jsonData = pm.response.json();",
+									"} catch (e) {",
+									"    jsonData = {};",
+									"    console.error('Response is not valid JSON:', e);",
+									"}",
+									"",
+									"// 2. Extraigo detail",
+									"if (jsonData) {",
+									"    detail = jsonData.detail;",
+									"}",
+									"",
+									"",
+									"// 3. Tests",
+									"pm.test('Response status code is 4xx', function () {",
+									"    pm.expect(pm.response.code).to.be.within(400, 499);",
+									"});",
+									"pm.test('Detail is Usuario o contraseña incorrectos', function () {",
+									"    pm.expect(detail, 'Usuario o contraseña incorrectos').to.exist;",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"usuario\": \"\",\r\n  \"contraseña\": \"Yw7nS%orA0\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8000/app/login",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"app",
+								"login"
+							]
+						},
+						"description": "Generated from cURL: curl -X POST \"http://127.0.0.1:8000/login\" \\\r\n-H \"Content-Type: application/json\" \\\r\n-d '{\r\n  \"username\": \"usuario_demo\",\r\n  \"password\": \"clave123\"\r\n}'\r\n"
+					},
+					"response": []
+				},
+				{
+					"name": "login falla password",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let jsonData;",
+									"let detail;",
+									"",
+									"// 1. Parseo Json",
+									"try {",
+									"    jsonData = pm.response.json();",
+									"} catch (e) {",
+									"    jsonData = {};",
+									"    console.error('Response is not valid JSON:', e);",
+									"}",
+									"",
+									"// 2. Extraigo detail",
+									"if (jsonData) {",
+									"    detail = jsonData.detail;",
+									"}",
+									"",
+									"",
+									"// 3. Tests",
+									"pm.test('Response status code is 4xx', function () {",
+									"    pm.expect(pm.response.code).to.be.within(400, 499);",
+									"});",
+									"pm.test('Detail is Usuario o contraseña incorrectos', function () {",
+									"    pm.expect(detail, 'Usuario o contraseña incorrectos').to.exist;",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"usuario\": \"mlipo\",\r\n  \"contraseña\": \"\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8000/app/login",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"app",
+								"login"
+							]
+						},
+						"description": "Generated from cURL: curl -X POST \"http://127.0.0.1:8000/login\" \\\r\n-H \"Content-Type: application/json\" \\\r\n-d '{\r\n  \"username\": \"usuario_demo\",\r\n  \"password\": \"clave123\"\r\n}'\r\n"
+					},
+					"response": []
+				},
+				{
+					"name": "contact primer envío",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Body contains 'Correo enviado correctamente.'\", function () {",
+									"    pm.expect(pm.response.text()).to.include(\"Correo enviado correctamente.\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8000/app/contacto?username={{user}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"app",
+								"contacto"
+							],
+							"query": [
+								{
+									"key": "username",
+									"value": "{{user}}"
+								}
+							]
+						},
+						"description": "Generated from cURL: curl -X 'POST' \\\r\n  'http://localhost:8000/api/contact?username=mlipo' \\\r\n  -H 'accept: application/json' \\\r\n  -d ''"
+					},
+					"response": []
+				},
+				{
+					"name": "contact segundo envío",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const body = pm.response.text();\r",
+									"const re = /El usuario\\s+(.+?)\\s+ya envió un correo\\b/i;\r",
+									"\r",
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Body contains expected message format (ignoring username)\", function () {\r",
+									"    pm.expect(re.test(body)).to.be.true;\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8000/app/contacto?username={{user}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"app",
+								"contacto"
+							],
+							"query": [
+								{
+									"key": "username",
+									"value": "{{user}}"
+								}
+							]
+						},
+						"description": "Generated from cURL: curl -X 'POST' \\\r\n  'http://localhost:8000/api/contact?username=mlipo' \\\r\n  -H 'accept: application/json' \\\r\n  -d ''"
+					},
+					"response": []
+				},
+				{
+					"name": "contact usuario incorrecto",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"\r",
+									"pm.test(\"Status code is 404\", function () {\r",
+									"    pm.response.to.have.status(404);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Body contains 'Error al obtener datos del proveedor'\", function () {\r",
+									"    pm.expect(pm.response.text()).to.include(\"Error al obtener datos del proveedor\");\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8000/api/contact?username=user",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"contact"
+							],
+							"query": [
+								{
+									"key": "username",
+									"value": "user"
+								}
+							]
+						},
+						"description": "Generated from cURL: curl -X 'POST' \\\r\n  'http://localhost:8000/api/contact?username=mlipo' \\\r\n  -H 'accept: application/json' \\\r\n  -d ''"
+					},
+					"response": []
+				},
+				{
+					"name": "logs",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8000/app/logs?empresa={{comapnyId}}&usuario=1&fecha_hasta=&limit=10&offset=0",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"app",
+								"logs"
+							],
+							"query": [
+								{
+									"key": "empresa",
+									"value": "{{comapnyId}}"
+								},
+								{
+									"key": "usuario",
+									"value": "1"
+								},
+								{
+									"key": "fecha_desde",
+									"value": null,
+									"disabled": true
+								},
+								{
+									"key": "fecha_hasta",
+									"value": ""
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								}
+							]
+						},
+						"description": "Generated from cURL: curl -X 'GET' \\\r\n  'http://localhost:8000/administrativa/?p_company_id=1&p_limit=10&p_offset=0' \\\r\n  -H 'accept: application/json'"
+					},
+					"response": []
+				},
+				{
+					"name": "cambiar-estado",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"usuario\": \"maria11.lopez\",\r\n  \"contraseña\": \"fu19ia?Gf&\"\r\n}"
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8000/administrativa/cambiar-estado?p_id=1&p_category=user&p_status=activo",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"administrativa",
+								"cambiar-estado"
+							],
+							"query": [
+								{
+									"key": "p_id",
+									"value": "1"
+								},
+								{
+									"key": "p_category",
+									"value": "user"
+								},
+								{
+									"key": "p_status",
+									"value": "activo"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "004_archivos",
+			"item": [
+				{
+					"name": "upload",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "empresa",
+									"value": "3",
+									"type": "text"
+								},
+								{
+									"key": "categoria",
+									"value": "DDOS",
+									"type": "text"
+								},
+								{
+									"key": "dia",
+									"value": "11",
+									"type": "text"
+								},
+								{
+									"key": "mes",
+									"value": "11",
+									"type": "text"
+								},
+								{
+									"key": "anio",
+									"value": "2025",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"contentType": "text/plain",
+									"type": "file",
+									"src": "/C:/Users/marti/Desktop/antel_ddos_reporte_08_2025.txt"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:8000/archivos/upload",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"archivos",
+								"upload"
+							]
+						},
+						"description": "Generated from cURL: curl -X 'POST' \\\r\n  'http://localhost:8000/administrativa/upload' \\\r\n  -H 'accept: application/json' \\\r\n  -H 'Content-Type: multipart/form-data' \\\r\n  -F 'empresa=antel' \\\r\n  -F 'categoria=ddos' \\\r\n  -F 'dia=11' \\\r\n  -F 'mes=11' \\\r\n  -F 'anio=2025' \\\r\n  -F 'file=@antel_ddos_reporte_08_2025.txt;type=text/plain'"
+					},
+					"response": []
+				},
+				{
+					"name": "listar",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8000/archivos/listar?nombre=acme_treathounting_reporte_06_2025&categoria=DDOS&fecha_desde=2025-01-01&fecha_hasta=2025-12-31&limit=10&offset=0",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"archivos",
+								"listar"
+							],
+							"query": [
+								{
+									"key": "nombre",
+									"value": "acme_treathounting_reporte_06_2025"
+								},
+								{
+									"key": "categoria",
+									"value": "DDOS"
+								},
+								{
+									"key": "fecha_desde",
+									"value": "2025-01-01"
+								},
+								{
+									"key": "fecha_hasta",
+									"value": "2025-12-31"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								}
+							]
+						},
+						"description": "Generated from cURL: curl -X 'GET' \\\r\n  'http://localhost:8000/archivos/listar?nombre=acme_treathounting_reporte_06_2025&categoria=DDOS&fecha_desde=2025-01-01&fecha_hasta=2025-12-31&limit=10&offset=0' \\\r\n  -H 'accept: application/json'"
+					},
+					"response": []
+				},
+				{
+					"name": "id/descargar",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8000/api/archivos/22/descargar",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"archivos",
+								"22",
+								"descargar"
+							]
+						},
+						"description": "Generated from cURL: curl -X 'GET' \\\r\n  'http://localhost:8000/api/archivos/22/descargar' \\\r\n  -H 'accept: application/json'"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "token",
+			"value": ""
+		},
+		{
+			"key": "supplierId",
+			"value": ""
+		},
+		{
+			"key": "comapnyId",
+			"value": ""
+		},
+		{
+			"key": "userId",
+			"value": ""
+		},
+		{
+			"key": "user",
+			"value": ""
+		}
+	]
+}

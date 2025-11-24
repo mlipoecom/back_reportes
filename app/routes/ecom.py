@@ -3,10 +3,10 @@ from fastapi import APIRouter, HTTPException, Header, Query
 from fastapi.responses import JSONResponse
 from datetime import date
 from typing import Dict, Any, Optional
-from models import SupplierGenerate, SupplierGenerateResponse
+from models import SupplierGenerate, SupplierGenerateResponse, UserGenerate, AssignRolesRequest
 from database import get_pool
 from utils import get_user_id_from_token
-
+from .users import generate_and_create_user, assign_roles
 router = APIRouter(
     prefix="/ecom",
     tags=["Ecom"]
@@ -97,22 +97,52 @@ async def generate_and_create_supplier(
         raise HTTPException(status_code=401, detail="Token inválido o faltante")
 
     token = authorization
-
     user_id = get_user_id_from_token(token)
-
+    
     try:
         db_response = await call_sp_insert_supplier(
         supplier_data.name, supplier_data.businessName, supplier_data.externalId,
         supplier_data.description, supplier_data.status, supplier_data.email, user_id
     )
+        response = SupplierGenerateResponse(**db_response)
+        supplier_id = response.id
+        print(supplier_id)
         if db_response["id"] == 0 or (
             db_response["info"] and "error" in db_response["info"].lower()
         ):
             return JSONResponse(status_code=400, content=db_response)
+        supplier_admin_data: Dict[str, UserGenerate]  = {
+            "admin_user": UserGenerate(
+                name=f"Administrador",
+                lastName=supplier_data.name,
+                email=supplier_data.email,
+                externalId=f"admin_{supplier_data.name}",
+                supplierId=supplier_id,
+                companyId=None,
+                customerId=None,
+                status="activo"
+            )
+        }
 
-        return SupplierGenerateResponse(**db_response)
+        result_user = await generate_and_create_user(
+            supplier_admin_data["admin_user"],
+            authorization)
+
+        supplier_admin_id = result_user.id
+        role_data: Dict[str, AssignRolesRequest] = {
+            "assignRole": AssignRolesRequest(
+                user_id=supplier_admin_id,
+                role_id=2
+            )
+        }
+
+        await assign_roles(role_data["assignRole"], authorization)
+
+        return response
     except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error al crear proveedor: {e}")
+    
+    
     
 # -------------------------------
 # SUPPLIER LIST
@@ -131,16 +161,16 @@ async def generate_and_create_supplier(
                         "info": "Proveedores listados exitosamente",
                         "suppliers": [
                             {
-                                "id": 1,
-                                "name": "Proveedor A",
-                                "businessName": "Proveedor A S.A.",
-                                "externalId": "EXT001",
-                                "description": "Proveedor mayorista",
-                                "createdAt": "2024-01-10",
-                                "status": "ACTIVE",
-                                "email": "contacto@proveedora.com",
-                                "createdBy": "USR001"
-                            }
+                            "id": 1,
+                            "name": "Ecom",
+                            "email": "info@ecom.com.uy",
+                            "status": "activo",
+                            "createdAt": "2025-10-29",
+                            "createdBy": "provAdmin",
+                            "externalId": "Ecom",
+                            "description": "Desc",
+                            "businessName": "Ecom Center SRL"
+                        }
                         ]
                     }
                 }
@@ -186,7 +216,7 @@ async def get_suppliers(
             )
 
             # Convertir jsonb a dict
-            suppliers = [record["fn_get_supplier"] for record in rows]
+            suppliers = [json.loads(record["fn_get_supplier"]) for record in rows]
 
             return {
                 "info": "Proveedores listados exitosamente",

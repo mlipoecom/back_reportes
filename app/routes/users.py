@@ -209,11 +209,18 @@ async def generate_and_create_user(
         },
     }
 )  # Type: id: id del usuario  role_id: id del rol
-async def assign_roles(payload: AssignRolesRequest) -> str:
+async def assign_roles(
+    payload: AssignRolesRequest,
+    authorization: str = Header(..., description="Bearer Token")) -> str:
+
     pool = await get_pool()
     cursor_name = "assign_role_result"
     params = (payload.user_id, payload.role_id, cursor_name)
-
+    
+    # Valido token
+    if authorization is None or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Token inválido o faltante")
+    
     async with pool.acquire() as conn:
         try:
             message = ""
