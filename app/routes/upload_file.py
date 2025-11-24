@@ -4,13 +4,15 @@ import os
 from typing import Dict, Any
 from config import S3_CONFIG
 from database import get_pool
-from datetime import date
+from datetime import date, datetime
+from routes.categories import get_category_by_id
+from routes.companies import get_customer_by_id
 from dependencies import require_roles
 from roles import UserRole
 
 router = APIRouter(
-    prefix="/administrativa",
-    tags=["Administrativas"]
+    prefix="/archivos",
+    tags=["Archivos"]
 )
 
 
@@ -36,8 +38,9 @@ async def call_sp_insert_file(
     p_path: str,
     p_upload: str,
     p_report: str,
-    p_category: str,
-    p_company: int
+    p_category_id: int,
+    p_customer_id: int,
+    p_company_user_id: int
 ) -> Dict[str, Any]:
     p_return = "file_insert_result"
 
@@ -46,13 +49,14 @@ async def call_sp_insert_file(
             async with conn.transaction():
                 # Paso 1: ejecutar el SP (no fetch)
                 await conn.execute(
-                    "CALL sp_insert_file($1,$2,$3,$4,$5,$6,$7);",
+                    "CALL sp_insert_file($1,$2,$3,$4,$5,$6,$7,$8);",
                     p_name,
                     p_path,
                     p_upload,
                     p_report,
-                    p_category,
-                    p_company,
+                    p_category_id,
+                    p_customer_id,
+                    p_company_user_id,
                     p_return
                 )
 
@@ -73,47 +77,55 @@ async def call_sp_insert_file(
 
 @router.post("/upload")
 async def upload_file(
-    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN])),
-    empresa: int = Form(...),
-    categoria: str = Form(...),
-    dia: str = Form(...),
-    mes: int = Form(...),
-    anio: int = Form(...),
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.COMPANY_USER])),
+    customer_id: int = Form(...),
+    category_id: int = Form(...),
+    report_date: str = Form(...),
     file: UploadFile = None
 ):
     if not file:
         raise HTTPException(status_code=400, detail="Debe incluir un archivo")
 
+
+    category = await get_category_by_id(category_id)
+
+    customer = await get_customer_by_id(customer_id)
+
+    company_user_id = current_user.get("ID")
+
+    fecha_reporte_dt = datetime.strptime(report_date, "%Y-%m-%d")
+    year = fecha_reporte_dt.year
+    month = fecha_reporte_dt.month
+    day = fecha_reporte_dt.day
     _, ext = os.path.splitext(file.filename)
-    nuevo_nombre = f"{empresa}_{categoria}_{mes}_{anio}{ext}"
-    key = f"{empresa}/{categoria}/{nuevo_nombre}"
+    file_name = f"{customer['name']}_{category['name']}_{month}_{year}{ext}"
+    key = f"{customer['name']}/{category['name']}/{file_name}"
 
     s3.upload_fileobj(file.file, S3_BUCKET, key)
 
-    company_id = current_user.get("companyId")
-
-    print("Nombre:", nuevo_nombre)
-    print("Path:", f"{empresa}/{categoria}")
+    print("Nombre:", file_name)
+    print("Path:", f"{customer['name']}/{category['name']}")
     print("Upload:", str(date.today()))
-    print("Report:", f"{anio}-{mes}-{dia}")
-    print("Category:", categoria)
-    print("Company:", company_id)
-
+    print("Report:", f"{year}-{month}-{day}")
+    print("Category:", category['name'])
+    print("Company User:", company_user_id)
+    print("Customer:", customer['name'])
 
     db_response = await call_sp_insert_file(
-        nuevo_nombre,
-        f"{empresa}/{categoria}",
-        str(date.today()),
-        f"{anio}-{mes}-{dia}",
-        categoria,
-        company_id
+        file_name,  
+        f"{customer['name']}/{category['name']}", # path
+        str(date.today()), # upload date
+        f"{year}-{month}-{day}", # report date
+        category_id, 
+        customer_id,
+        company_user_id
     )
 
     return {
-        "mensaje": db_response["info"],
+        "info": db_response["info"],
         "id": db_response["id"],
         "bucket": S3_BUCKET,
-        "directorio": f"{empresa}/{categoria}",
-        "nombre_archivo": nuevo_nombre,
+        "directorio": f"{customer['name']}/{category['name']}",
+        "nombre_archivo": file_name,
         "ruta_s3": key
     }

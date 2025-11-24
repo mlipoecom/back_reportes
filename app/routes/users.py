@@ -1,11 +1,11 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Header, Depends
 from fastapi.responses import JSONResponse
 from datetime import date
 import bcrypt
 from typing import Dict, Any
 from mail import send_user_password_email
 from models import UserGenerate, UserGenerateResponse, AssignClientRequest
-from utils import generate_safe_password
+from utils import generate_safe_password, get_user_id_from_token
 from database import get_pool
 from models import AssignRolesRequest
 from dependencies import require_roles
@@ -13,8 +13,8 @@ from roles import UserRole
 
 
 router = APIRouter(
-    prefix="/administrativa",
-    tags=["Administrativas"]
+    prefix="/proveedor",
+    tags=["Proveedores"]
 )
 
 
@@ -27,7 +27,8 @@ async def call_sp_insert_user(
     p_supplier: str,
     p_company: int = None,
     p_customer: int = None,
-    p_email: str = ""
+    p_email: str = "",
+    p_created_by = int
 ) -> Dict[str, Any]:
     p_creation_date = date.today()
     cursor_name = "user_insert_result"
@@ -41,14 +42,14 @@ async def call_sp_insert_user(
 
     params = (
         p_name, p_last_name, p_external_id, p_hashed_password,
-        p_creation_date, p_status, db_supplier, db_company, db_customer, p_email, cursor_name
+        p_creation_date, p_status, db_supplier, db_company, db_customer, p_email, p_created_by, cursor_name
     )
 
     try:
         async with (await get_pool()).acquire() as conn:
             async with conn.transaction():
                 await conn.execute(
-                    "CALL sp_insert_user($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11);",
+                    "CALL sp_insert_user($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12);",
                     *params
                 )
                 rows = await conn.fetch(f'FETCH ALL IN "{cursor_name}";')
@@ -66,7 +67,7 @@ async def call_sp_insert_user(
 
 
 @router.post(
-    "/crear-usuario",
+    "/usuario/crear",
     summary="Crear usuario",
     description="Registrar un nuevo usuario de una empresa",
     response_model=UserGenerateResponse,
@@ -109,8 +110,16 @@ async def call_sp_insert_user(
 
 async def generate_and_create_user(
     user_data: UserGenerate,
-    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN]))
-):
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN])),
+    authorization: str = Header(..., description="Bearer Token")):
+
+    # Valido token
+    if authorization is None or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Token inválido o faltante")
+
+    token = authorization
+    user_id = get_user_id_from_token(token)
+
     try:
         password = generate_safe_password()
         salt = bcrypt.gensalt(rounds=12)
@@ -130,7 +139,8 @@ async def generate_and_create_user(
         p_supplier=user_data.supplierId if user_data.supplierId else None,
         p_company=user_data.companyId if user_data.companyId else None,
         p_customer=user_data.customerId if user_data.customerId else None,
-        p_email=user_data.email
+        p_email=user_data.email,
+        p_created_by=user_id
     )
 
     if db_response["id"] == 0 or (db_response["info"] and "error" in db_response["info"].lower()):
@@ -204,11 +214,17 @@ async def generate_and_create_user(
 )  # Type: id: id del usuario  role_id: id del rol
 async def assign_roles(
     payload: AssignRolesRequest,
+    authorization: str = Header(..., description="Bearer Token"),
     current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN]))
 ) -> str:
+
     pool = await get_pool()
     cursor_name = "assign_role_result"
     params = (payload.user_id, payload.role_id, cursor_name)
+
+    # Valido token
+    if authorization is None or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Token inválido o faltante")
 
     async with pool.acquire() as conn:
         try:

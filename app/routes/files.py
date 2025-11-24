@@ -6,11 +6,10 @@ import json
 from database import get_pool
 from dependencies import require_roles
 from roles import UserRole
-from convert_files import drive_direct_download_url, transform_dropbox_link
 
 router = APIRouter(
-    prefix="/api",
-    tags=["Api"]
+    prefix="/archivos",
+    tags=["Archivos"]
 )
 
 async def call_fn_get_archivos(
@@ -54,19 +53,12 @@ async def call_fn_get_archivos(
 
     # Procesar rutas dentro del array 'files'
     files = result.get("files", [])
-    for file in files:
-        ruta = file.get("ruta", "")
-        if "drive.google.com" in ruta:
-            file["ruta"] = drive_direct_download_url(ruta)
-        elif "dropbox.com" in ruta:
-            file["ruta"] = transform_dropbox_link(ruta)
-
     result["files"] = files
     return result
 
 
 @router.get(
-    "/archivos",
+    "/listar",
     summary="Obtener archivos",
     description="Devuelve los archivos pertenecientes al cliente, filtrados por categorías, fechas y nombres, junto con información de la compañía.",
     responses={
@@ -109,6 +101,7 @@ async def call_fn_get_archivos(
         },
     }
 )
+
 async def get_archivos(
     current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN, UserRole.CUSTOMER_ADMIN, UserRole.CUSTOMER_USER, UserRole.COMPANY_ADMIN, UserRole.COMPANY_USER])),
     nombre: Optional[str] = Query(None, example="acme_treathounting_reporte_06_2025"),
@@ -152,7 +145,7 @@ async def get_archivos(
 
 
 @router.get(
-    "/archivos/{file_id}/descargar",
+    "/{file_id}/descargar",
     summary="Descargar archivo",
     description="Descarga un archivo de la compañía.",
     responses={
