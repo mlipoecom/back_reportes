@@ -1,7 +1,9 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import Literal
 from database import get_pool
 from models import UpdateStatusResponse
+from dependencies import require_roles
+from roles import UserRole
 
 router = APIRouter(
     prefix="/administrativa",
@@ -43,7 +45,8 @@ async def update_status(
     ),
     p_status: Literal["activo", "suspendido", "inactivo"] = Query(
         ..., description="Nuevo estado", example="activo"
-    )
+    ),
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN]))
 ):
     pool = await get_pool()
     async with pool.acquire() as conn:

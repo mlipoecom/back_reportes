@@ -1,9 +1,11 @@
 import json
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from fastapi.responses import JSONResponse
 from typing import Optional
 from database import get_pool
+from dependencies import require_roles
+from roles import UserRole
 
 router = APIRouter(
     prefix="/administrativa",
@@ -61,7 +63,8 @@ async def get_logs(
     fecha_desde: Optional[str] = Query(None, description="Fecha desde (YYYY-MM-DD)", example="2025-01-01"),
     fecha_hasta: Optional[str] = Query(None, description="Fecha hasta (YYYY-MM-DD)", example="2025-31-12"),
     limit: Optional[int] = Query(10, description="Límite de registros"),
-    offset: Optional[int] = Query(0, description="Desplazamiento de registros")
+    offset: Optional[int] = Query(0, description="Desplazamiento de registros"),
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN]))
 ):
 
     try:

@@ -1,7 +1,9 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 import json
 from database import get_pool
 from mail import send_email_via_smtp, update_sent_mail
+from dependencies import require_roles
+from roles import UserRole
 
 router = APIRouter(
     prefix="/api",
@@ -55,7 +57,10 @@ async def get_supplier_contact(username: str) -> dict:
                 }
             )
 
-async def notify_supplier(username: str = Query(...,example="johnDoe123")):
+async def notify_supplier(
+    username: str = Query(...,example="johnDoe123"),
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN, UserRole.CUSTOMER_ADMIN, UserRole.CUSTOMER_USER, UserRole.COMPANY_ADMIN, UserRole.COMPANY_USER]))
+):
     try:
         supplier_contact = await get_supplier_contact(username)
 

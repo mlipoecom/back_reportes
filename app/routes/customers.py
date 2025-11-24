@@ -1,8 +1,9 @@
-from fastapi import APIRouter, HTTPException, Header
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from database import get_pool
 import json
-from utils import get_company_id_from_token
+from dependencies import require_roles
+from roles import UserRole
 
 router = APIRouter(
     prefix="/api",
@@ -53,10 +54,10 @@ router = APIRouter(
         },
     }
 )
-async def get_customers(    
-    authorization: str = Header(..., description="Bearer Token", example="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."),
+async def get_customers(
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN]))
 ):
-    company_id = get_company_id_from_token(authorization)
+    company_id = current_user.get("companyId")
     try:
         async with (await get_pool()).acquire() as conn:
             rows = await conn.fetch("SELECT fn_get_customers($1);", company_id)

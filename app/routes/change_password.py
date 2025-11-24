@@ -1,10 +1,12 @@
-from fastapi import APIRouter, HTTPException, Path
+from fastapi import APIRouter, HTTPException, Path, Depends
 from fastapi.responses import JSONResponse
 import bcrypt
 from .auth import get_user_by_username
 from mail import send_new_password_email
 from utils import generate_safe_password
 from database import get_pool
+from dependencies import require_roles
+from roles import UserRole
 
 router = APIRouter(
     prefix="/administrativa",
@@ -40,7 +42,10 @@ router = APIRouter(
     }
     )
 
-async def change_password(id: str = Path(..., example="johnDoe123")):
+async def change_password(
+    id: str = Path(..., example="johnDoe123"),
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN]))
+):
     user = await get_user_by_username(id)
     if not user:
         raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")

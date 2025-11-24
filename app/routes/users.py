@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from datetime import date
 import bcrypt
@@ -8,6 +8,8 @@ from models import UserGenerate, UserGenerateResponse, AssignClientRequest
 from utils import generate_safe_password
 from database import get_pool
 from models import AssignRolesRequest
+from dependencies import require_roles
+from roles import UserRole
 
 
 router = APIRouter(
@@ -105,7 +107,10 @@ async def call_sp_insert_user(
     }
 )
 
-async def generate_and_create_user(user_data: UserGenerate):
+async def generate_and_create_user(
+    user_data: UserGenerate,
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN]))
+):
     try:
         password = generate_safe_password()
         salt = bcrypt.gensalt(rounds=12)
@@ -197,7 +202,10 @@ async def generate_and_create_user(user_data: UserGenerate):
         },
     }
 )  # Type: id: id del usuario  role_id: id del rol
-async def assign_roles(payload: AssignRolesRequest) -> str:
+async def assign_roles(
+    payload: AssignRolesRequest,
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN]))
+) -> str:
     pool = await get_pool()
     cursor_name = "assign_role_result"
     params = (payload.user_id, payload.role_id, cursor_name)
@@ -230,7 +238,10 @@ async def assign_roles(payload: AssignRolesRequest) -> str:
 
 
 @router.post("/asignar-cliente")
-async def assign_client(body: AssignClientRequest) -> Dict[str, Any]:
+async def assign_client(
+    body: AssignClientRequest,
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN]))
+) -> Dict[str, Any]:
 
     pool = await get_pool()
 

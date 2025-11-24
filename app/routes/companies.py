@@ -1,9 +1,11 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from datetime import date
 from typing import Dict, Any
 from models import CompanyGenerate, CompanyGenerateResponse
 from database import get_pool
+from dependencies import require_roles
+from roles import UserRole
 
 router = APIRouter(
     prefix="/administrativa",
@@ -88,7 +90,10 @@ async def call_sp_insert_company(
         },
     }
 )
-async def generate_and_create_company(company_data: CompanyGenerate):
+async def generate_and_create_company(
+    company_data: CompanyGenerate,
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN]))
+):
     try:
         db_response = await call_sp_insert_company(
             company_data.name,

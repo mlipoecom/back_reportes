@@ -1,11 +1,12 @@
-from fastapi import UploadFile, Form, HTTPException, APIRouter, Header
+from fastapi import UploadFile, Form, HTTPException, APIRouter, Depends
 import boto3
 import os
 from typing import Dict, Any
 from config import S3_CONFIG
 from database import get_pool
 from datetime import date
-from utils import get_company_id_from_token
+from dependencies import require_roles
+from roles import UserRole
 
 router = APIRouter(
     prefix="/administrativa",
@@ -72,7 +73,7 @@ async def call_sp_insert_file(
 
 @router.post("/upload")
 async def upload_file(
-    authorization: str = Header(..., description="Bearer Token", example="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."),
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN])),
     empresa: int = Form(...),
     categoria: str = Form(...),
     dia: str = Form(...),
@@ -89,7 +90,7 @@ async def upload_file(
 
     s3.upload_fileobj(file.file, S3_BUCKET, key)
 
-    company_id = get_company_id_from_token(authorization)
+    company_id = current_user.get("companyId")
 
     print("Nombre:", nuevo_nombre)
     print("Path:", f"{empresa}/{categoria}")

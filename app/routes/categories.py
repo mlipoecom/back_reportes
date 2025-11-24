@@ -1,9 +1,9 @@
-from fastapi import APIRouter, HTTPException, Header
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
 from database import get_pool
 from models import CategoryCreateRequest, CategoryUpdateRequest
-from utils import get_supplier_id_from_token, get_user_id_from_token
+from dependencies import require_roles
+from roles import UserRole
 import json
 
 router = APIRouter(
@@ -15,11 +15,11 @@ router = APIRouter(
 @router.post("/crear")
 async def create_category(
     body: CategoryCreateRequest,
-    authorization: str = Header(..., description="Bearer Token")
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN]))
 ):
 
-    supplier_id = get_supplier_id_from_token(authorization)
-    user_id = get_user_id_from_token(authorization)
+    supplier_id = current_user.get("supplierId")
+    user_id = current_user.get("ID")
 
     mode = "CREATE"
 
@@ -65,11 +65,11 @@ async def create_category(
 async def update_category(
     category_id: int,
     body: CategoryUpdateRequest,
-    authorization: str = Header(..., description="Bearer Token")
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN]))
 ):
 
-    supplier_id = get_supplier_id_from_token(authorization)
-    user_id = get_user_id_from_token(authorization)
+    supplier_id = current_user.get("supplierId")
+    user_id = current_user.get("ID")
 
     mode = "EDIT"
 
@@ -111,17 +111,13 @@ async def update_category(
         except Exception as e:
             raise HTTPException(500, str(e))
 
-        
+
 @router.get("/lista", summary="Lista todas las categorías de un proveedor")
-async def get_categories(authorization: str = Header(..., description="Bearer Token")):
-    # Valido token
-    if authorization is None or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Token inválido o faltante")
-
-    token = authorization
-
+async def get_categories(
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN, UserRole.CUSTOMER_ADMIN, UserRole.CUSTOMER_USER, UserRole.COMPANY_ADMIN, UserRole.COMPANY_USER]))
+):
     # Obtengo supplierId
-    supplier_id = get_supplier_id_from_token(token)
+    supplier_id = current_user.get("supplierId")
     if supplier_id is None:
         raise HTTPException(status_code=401, detail="No se pudo obtener supplierId del token")
 
