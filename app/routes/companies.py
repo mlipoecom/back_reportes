@@ -5,7 +5,7 @@ from datetime import date
 from typing import Dict, Any
 from models import AssignClientRequest
 from database import get_pool
-from utils import get_user_id_from_token
+from utils import get_user_id_from_token, get_company_id_from_token
 
 
 router = APIRouter(
@@ -231,5 +231,23 @@ async def get_categories_by_customer_and_company_user(
                     "categories": categories,
                 }
             )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+        
+async def get_customer_by_id(customer_id: int):
+    try:
+        async with (await get_pool()).acquire() as conn:
+            rows = await conn.fetch("SELECT fn_get_customer_by_id($1);", customer_id)
+            
+            if not rows or not rows[0]["fn_get_customer_by_id"]:
+                raise HTTPException(status_code=404, detail=f"Cliente {customer_id} no encontrado")
+
+            customer = json.loads(rows[0]["fn_get_customer_by_id"])
+            return customer
+            
+    except HTTPException as he:
+        raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
