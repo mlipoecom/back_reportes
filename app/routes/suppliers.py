@@ -172,7 +172,8 @@ async def get_companies(
     status: Optional[str] = Query(None, description="Status", example="activo"),
     limit: Optional[int] = Query(10, description="Límite de registros.", example=10),
     offset: Optional[int] = Query(0, description="Desplazamiento de registros", example=0),
-    authorization: str = Header(description="Bearer Token", example="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
+    authorization: str = Header(description="Bearer Token", example="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."),
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN]))
 ):
     supplier_id = get_supplier_id_from_token(authorization)
 

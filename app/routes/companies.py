@@ -1,7 +1,6 @@
 import json
 from fastapi import APIRouter, HTTPException, Header, Query, Depends
 from fastapi.responses import JSONResponse
-from datetime import date
 from typing import Dict, Any
 from models import AssignClientRequest
 from database import get_pool
@@ -16,7 +15,10 @@ router = APIRouter(
 )
 
 @router.post("/asignar-cliente")
-async def assign_client(body: AssignClientRequest) -> Dict[str, Any]:
+async def assign_client(
+    body: AssignClientRequest,
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN]))
+) -> Dict[str, Any]:
 
     pool = await get_pool()
 
@@ -100,6 +102,7 @@ async def assign_client(body: AssignClientRequest) -> Dict[str, Any]:
 )
 async def get_customers(    
     authorization: str = Header(..., description="Bearer Token", example="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."),
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN, UserRole.COMPANY_ADMIN]))
 ):
     company_id = get_company_id_from_token(authorization)
     try:
@@ -161,6 +164,7 @@ async def get_customers(
 )
 async def get_customers_by_company_user(
     authorization: str = Header(..., description="Bearer Token", example="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."),
+    current_user: dict = Depends(require_roles([UserRole.COMPANY_ADMIN, UserRole.COMPANY_USER]))
 ):
     company_user_id = get_user_id_from_token(authorization)
     try:

@@ -1,5 +1,5 @@
 import json
-from fastapi import APIRouter, HTTPException, Header, Query
+from fastapi import APIRouter, HTTPException, Header, Query, Depends
 from fastapi.responses import JSONResponse
 from datetime import date
 from typing import Dict, Any, Optional
@@ -7,6 +7,8 @@ from models import SupplierGenerate, SupplierGenerateResponse, UserGenerate, Ass
 from database import get_pool
 from utils import get_user_id_from_token
 from .users import generate_and_create_user, assign_roles
+from dependencies import require_roles
+from roles import UserRole
 router = APIRouter(
     prefix="/ecom",
     tags=["Ecom"]
@@ -90,7 +92,8 @@ async def call_sp_insert_supplier(
 
 async def generate_and_create_supplier(
     supplier_data: SupplierGenerate,
-    authorization: str = Header(..., description="Bearer Token")):
+    authorization: str = Header(..., description="Bearer Token"),
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN]))):
 
     # Valido token
     if authorization is None or not authorization.startswith("Bearer "):
@@ -196,7 +199,8 @@ async def get_suppliers(
     externalId: Optional[str] = Query(None, description="Filtrar por ID externo."),
     limit: Optional[int] = Query(10, description="Cantidad máxima de registros a devolver."),
     offset: Optional[int] = Query(0, description="Cantidad de registros a omitir antes de comenzar la lista."),
-    authorization: str = Header(..., description="Bearer Token")
+    authorization: str = Header(..., description="Bearer Token"),
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN]))
 ):
     # Valido token
     if authorization is None or not authorization.startswith("Bearer "):
@@ -280,7 +284,8 @@ async def get_suppliers(
 )
 async def delete_supplier(
     supplierId: int,
-    authorization: str = Header(..., description="Bearer Token")
+    authorization: str = Header(..., description="Bearer Token"),
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN]))
 ):
     # Validar token
     if not authorization.startswith("Bearer "):
