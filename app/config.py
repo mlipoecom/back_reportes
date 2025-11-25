@@ -1,9 +1,9 @@
 DB_CONFIG = { # Cambiar en AWS secrets
     "user": "neondb_owner",
-    "password": "npg_N9Awt6rgVxqX",
-    "host": "ep-square-wave-adh9c715-pooler.c-2.us-east-1.aws.neon.tech",
+    "password": "npg_M81kJoxrPfcB",
+    "host": "ep-lively-bird-ahgdldb3-pooler.c-3.us-east-1.aws.neon.tech",
     "port": 5432,
-    "database": "gestion_informes"
+    "database": "reportes2"
 }
 
 SMTP_CONFIG = {
@@ -23,7 +23,7 @@ TOKEN_CONFIG = {
 
 
 S3_CONFIG = {
-    "S3_ENDPOINT": "https://s3.localhost.localstack.cloud:4566",
-    # "S3_ENDPOINT": "http://localhost:4566",
+    # "S3_ENDPOINT": "https://s3.localhost.localstack.cloud:4566",
+    "S3_ENDPOINT": "http://localhost:4566",
     "S3_BUCKET": "portal-reportes"
 }
