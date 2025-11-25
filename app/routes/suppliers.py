@@ -204,10 +204,8 @@ async def call_sp_insert_customer(
 )
 async def generate_and_create_customer(
     customer_data: CustomerGenerate,
-    authorization: str = Header(..., description="Bearer Token")):
-    # Valido token
-    if authorization is None or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Token inválido o faltante")
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN]))
+    ):
 
     try:
         db_response = await call_sp_insert_customer(
@@ -234,7 +232,7 @@ async def generate_and_create_customer(
             status_code=500,
             content={"info": f"Error al crear empresa: {e}", "id": 0}
         )
-    
+
 @router.get("/empresa/listar",
         summary="Listar compañías.",
         description="Devuelve la lista de compañías pertenecientes a un proveedor.",
@@ -318,7 +316,7 @@ async def get_companies(
                     "example": {
                         "info": "Roles listados exitosamente",
                         "roles": [
-                            
+
                         ]
                     }
                 }
@@ -338,11 +336,8 @@ async def get_companies(
     }
 )
 async def get_roles(
-    authorization: str = Header(description="Bearer Token", example="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN, UserRole.CUSTOMER_ADMIN, UserRole.CUSTOMER_USER, UserRole.COMPANY_ADMIN, UserRole.COMPANY_USER]))
     ):
-
-    if authorization is None or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Token inválido o faltante")
 
     try:
         async with (await get_pool()).acquire() as conn:

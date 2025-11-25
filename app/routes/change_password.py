@@ -1,9 +1,9 @@
-from fastapi import APIRouter, HTTPException, Path, Header, Depends
+from fastapi import APIRouter, HTTPException, Path, Depends
 from fastapi.responses import JSONResponse
 import bcrypt
 from .auth import get_user_by_username
 from mail import send_new_password_email
-from utils import generate_safe_password, get_supplier_id_from_token
+from utils import generate_safe_password
 from database import get_pool
 from dependencies import require_roles
 from roles import UserRole
@@ -44,16 +44,11 @@ router = APIRouter(
 
 async def change_password(
     id: str = Path(..., example="johnDoe123"),
-    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN])),
-    authorization: str = Header(..., description="Bearer Token")):
-    # Valido token
-    if authorization is None or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Token inválido o faltante")
-
-    token = authorization
-
-    supplier_id = get_supplier_id_from_token(token)
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN]))
+    ):
+    supplier_id = current_user.get("supplierId")
     user = await get_user_by_username(id)
+
     if not user:
         raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
 
