@@ -19,8 +19,21 @@ class CompanyGenerate(BaseModel):
     status: str = Field('activo', description="Estado inicial de la empresa ('activo', 'suspendido', 'inactivo')")
     email: EmailStr = Field(..., example="info@acme.com", description="Email de la empresa")
 
+class CustomerGenerate(BaseModel):
+    name: str = Field(..., max_length=50, example="Acme", description="Nombre fantasía de la empresa")
+    businessName: str = Field(..., max_length=50, example="Acme SA", description="Razón social de la empresa")
+    externalId: str = Field(..., max_length=50, example="1234567890212", description="Identificador externo de la empresa")
+    description: str = Field(..., max_length=256, example="Consultance services", description="Descripción de la empresa")
+    status: str = Field('activo', description="Identificador de empresa ('activo', 'suspendido', 'inactivo')")
+    companyId: int = Field(...,  description="Identificador de la empresa", example=1)
+    email: EmailStr = Field(..., example="info@acme.com", description="Email de la empresa")
+
 class CompanyGenerateResponse(BaseModel):
     info: str = Field(example="Compañía creada exitosamente.")
+    id: int = Field(example=1)
+
+class CustomerGenerateResponse(BaseModel):
+    info: str = Field(example="Cliente creado exitosamente.")
     id: int = Field(example=1)
 
 class SupplierGenerate(BaseModel):

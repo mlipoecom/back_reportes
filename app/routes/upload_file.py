@@ -11,7 +11,7 @@ from dependencies import require_roles
 from roles import UserRole
 
 router = APIRouter(
-    prefix="/archivos",
+    prefix="/app/archivos",
     tags=["Archivos"]
 )
 
