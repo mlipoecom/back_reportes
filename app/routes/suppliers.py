@@ -310,3 +310,57 @@ async def get_companies(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/roles/listar",
+        summary="Listar roles.",
+        description="Devuelve la lista de roles disponibles.",
+        responses={
+        200: {
+            "description": "Ejecución exitosa",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "info": "Roles listados exitosamente",
+                        "roles": [
+                            
+                        ]
+                    }
+                }
+            },
+        },
+        500: {
+            "description": "Error interno del servidor",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "info": "Error en la BD: conexión fallida",
+                        "categories": []
+                    }
+                }
+            },
+        },
+    }
+)
+async def get_roles(
+    authorization: str = Header(description="Bearer Token", example="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
+    ):
+
+    if authorization is None or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Token inválido o faltante")
+
+    try:
+        async with (await get_pool()).acquire() as conn:
+            rows = await conn.fetch(
+                "SELECT fn_get_roles();"
+            )
+
+            roles = [json.loads(row["fn_get_roles"]) for row in rows]
+
+            return {
+                "info": "Roles listados exitosamente",
+                "roles": roles
+            }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
