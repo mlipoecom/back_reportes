@@ -53,7 +53,7 @@ async def assign_client(body: AssignClientRequest) -> Dict[str, Any]:
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
         
-@router.get("/get-customers",
+@router.get("/clientes/listar",
             summary="Listar clientes",
             description="Devuelve la lista de clientes de la compañía.",
             responses={
