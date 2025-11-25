@@ -1,7 +1,9 @@
-from fastapi import APIRouter, HTTPException, Query, Header
+from fastapi import APIRouter, HTTPException, Query, Header, Depends
 from typing import Literal
 from database import get_pool
 from models import UpdateStatusResponse
+from dependencies import require_roles
+from roles import UserRole
 
 router = APIRouter(
     prefix="/app",
@@ -44,7 +46,9 @@ async def update_status(
     p_status: Literal["activo", "suspendido", "inactivo"] = Query(
         ..., description="Nuevo estado", example="activo"
     ),
-    authorization: str = Header(..., description="Bearer Token")):
+    authorization: str = Header(..., description="Bearer Token"),
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN]))
+    ):
 
     # Valido token
     if authorization is None or not authorization.startswith("Bearer "):

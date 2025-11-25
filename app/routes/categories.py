@@ -1,10 +1,10 @@
-from fastapi import APIRouter, HTTPException, Header, Query
+from fastapi import APIRouter, HTTPException, Depends, Query
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
 from database import get_pool
 from models import CategoryCreateRequest, CategoryUpdateRequest
 from typing import Optional
-from utils import get_supplier_id_from_token, get_user_id_from_token
+from dependencies import require_roles
+from roles import UserRole
 import json
 
 router = APIRouter(
@@ -18,11 +18,11 @@ router = APIRouter(
 @router.post("/categoria/crear")
 async def create_category(
     body: CategoryCreateRequest,
-    authorization: str = Header(..., description="Bearer Token")
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN]))
 ):
 
-    supplier_id = get_supplier_id_from_token(authorization)
-    user_id = get_user_id_from_token(authorization)
+    supplier_id = current_user.get("supplierId")
+    user_id = current_user.get("ID")
 
     mode = "CREATE"
 
@@ -68,11 +68,11 @@ async def create_category(
 async def update_category(
     category_id: int,
     body: CategoryUpdateRequest,
-    authorization: str = Header(..., description="Bearer Token")
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN]))
 ):
 
-    supplier_id = get_supplier_id_from_token(authorization)
-    user_id = get_user_id_from_token(authorization)
+    supplier_id = current_user.get("supplierId")
+    user_id = current_user.get("ID")
 
     mode = "EDIT"
 
@@ -121,12 +121,9 @@ async def update_category(
 @router.delete("/categoria/{category_id}/eliminar", summary="Elimina o inactiva una categoría")
 async def delete_category(
     category_id: int,
-    authorization: str = Header(..., description="Bearer Token")
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN]))
 ):
-    if authorization is None or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Token inválido o faltante")
-    
-    supplier_id = get_supplier_id_from_token(authorization)
+    supplier_id = current_user.get("supplierId")
 
     pool = await get_pool()
 
@@ -157,15 +154,9 @@ async def get_categories(
     name: Optional[str] = Query(None, description="Nombre de la categoría"),
     createdBy: Optional[int] = Query(None, description="ID del creador de la categoría"),
     status: Optional[str] = Query(None, description="Status de l acategoría"),
-    authorization: str = Header(..., description="Bearer Token")):
-    # Valido token
-    if authorization is None or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Token inválido o faltante")
-
-    token = authorization
-
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN, UserRole.CUSTOMER_ADMIN, UserRole.CUSTOMER_USER, UserRole.COMPANY_ADMIN, UserRole.COMPANY_USER]))):
     # Obtengo supplierId
-    supplier_id = get_supplier_id_from_token(token)
+    supplier_id = current_user.get("supplierId")
     if supplier_id is None:
         raise HTTPException(status_code=401, detail="No se pudo obtener supplierId del token")
 
@@ -192,17 +183,20 @@ async def get_categories(
             raise HTTPException(status_code=500, detail=str(e))
 
 
-async def get_category_by_id(category_id: int):
+async def get_category_by_id(
+    category_id: int,
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN]))
+):
     try:
         async with (await get_pool()).acquire() as conn:
             rows = await conn.fetch("SELECT fn_get_category_by_id($1);", category_id)
-            
+
             if not rows or not rows[0]["fn_get_category_by_id"]:
                 raise HTTPException(status_code=404, detail=f"Categoría {category_id} no encontrada")
-                
+
             category = json.loads(rows[0]["fn_get_category_by_id"])
             return category
-            
+
     except HTTPException as he:
         raise he
     except Exception as e:

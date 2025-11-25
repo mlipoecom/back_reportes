@@ -1,13 +1,14 @@
-from fastapi import APIRouter, Query, HTTPException, Header
+from fastapi import APIRouter, Query, HTTPException, Depends
 from typing import Optional, Dict, Any
 from datetime import date
 from dateutil import parser as date_parser
 import json
 from database import get_pool
-from utils import get_user_id_from_token, get_company_id_from_token
+from dependencies import require_roles
+from roles import UserRole
 
 router = APIRouter(
-    prefix="/archivos",
+    prefix="/app/archivos",
     tags=["Archivos"]
 )
 
@@ -102,7 +103,7 @@ async def call_fn_get_archivos(
 )
 
 async def get_archivos(
-    authorization: str = Header(..., description="Bearer Token", example="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."),
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN, UserRole.CUSTOMER_ADMIN, UserRole.CUSTOMER_USER, UserRole.COMPANY_ADMIN, UserRole.COMPANY_USER])),
     nombre: Optional[str] = Query(None, example="acme_treathounting_reporte_06_2025"),
     categoria: Optional[str] = Query(None, example="DDOS"),
     fecha_desde_str: Optional[str] = Query(None, alias="fecha_desde", example="2025-01-01"),
@@ -112,7 +113,7 @@ async def get_archivos(
 ) -> Dict[str, Any]:
     """Endpoint principal: obtiene los archivos de una compañía según filtros."""
 
-    company_id = get_company_id_from_token(authorization)
+    company_id = current_user.get("companyId")
 
     fecha_desde = None
     fecha_hasta = None
@@ -155,10 +156,10 @@ async def get_archivos(
 )
 async def download_file_by_id(
     file_id: int,
-    authorization: str = Header(..., description="Bearer Token", example="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN, UserRole.CUSTOMER_ADMIN, UserRole.CUSTOMER_USER, UserRole.COMPANY_ADMIN, UserRole.COMPANY_USER]))
     )-> str:
     """Obtiene el archivo por id y registra la descarga."""
-    user_id = get_user_id_from_token(authorization)
+    user_id = current_user.get("ID")
 
     #TODO: Ver como obtener el ip
     ip = "127.0.0.1"

@@ -1,11 +1,12 @@
 import json
-from fastapi import APIRouter, HTTPException, Header, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from fastapi.responses import JSONResponse
 from datetime import date
 from typing import Dict, Any, Optional
 from models import CompanyGenerate, CustomerGenerate, CompanyGenerateResponse, CustomerGenerateResponse
 from database import get_pool
-from utils import get_supplier_id_from_token
+from dependencies import require_roles
+from roles import UserRole
 
 router = APIRouter(
     prefix="/proveedor",
@@ -92,15 +93,9 @@ async def call_sp_insert_company(
 )
 async def generate_and_create_company(
     company_data: CompanyGenerate,
-    authorization: str = Header(..., description="Bearer Token")):
-    # Valido token
-    if authorization is None or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Token inválido o faltante")
-
-    token = authorization
-
-    # Obtengo supplierId
-    supplier_id = get_supplier_id_from_token(token)
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN]))
+):
+    supplier_id = current_user.get("supplierId")
     if supplier_id is None:
         raise HTTPException(status_code=401, detail="No se pudo obtener supplierId del token")
     try:
@@ -251,7 +246,7 @@ async def generate_and_create_customer(
                     "example": {
                         "info": "Compañías listadas exitosamente",
                         "companies": [
-                            
+
                         ]
                     }
                 }
@@ -278,9 +273,9 @@ async def get_companies(
     status: Optional[str] = Query(None, description="Status", example="activo"),
     limit: Optional[int] = Query(10, description="Límite de registros.", example=10),
     offset: Optional[int] = Query(0, description="Desplazamiento de registros", example=0),
-    authorization: str = Header(description="Bearer Token", example="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN]))
 ):
-    supplier_id = get_supplier_id_from_token(authorization)
+    supplier_id = current_user.get("supplierId")
 
     # Validación companyId
     if companyId is not None and companyId.strip() != "":

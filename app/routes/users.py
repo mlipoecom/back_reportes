@@ -1,13 +1,15 @@
-from fastapi import APIRouter, HTTPException, Header
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from datetime import date
 import bcrypt
 from typing import Dict, Any
 from mail import send_user_password_email
 from models import UserGenerate, UserGenerateResponse, AssignClientRequest
-from utils import generate_safe_password, get_user_id_from_token
+from utils import generate_safe_password
 from database import get_pool
 from models import AssignRolesRequest
+from dependencies import require_roles
+from roles import UserRole
 
 
 router = APIRouter(
@@ -108,14 +110,8 @@ async def call_sp_insert_user(
 
 async def generate_and_create_user(
     user_data: UserGenerate,
-    authorization: str = Header(..., description="Bearer Token")):
-
-    # Valido token
-    if authorization is None or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Token inválido o faltante")
-
-    token = authorization
-    user_id = get_user_id_from_token(token)
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN]))):
+    user_id = current_user.get("ID")
 
     try:
         password = generate_safe_password()
@@ -211,16 +207,13 @@ async def generate_and_create_user(
 )  # Type: id: id del usuario  role_id: id del rol
 async def assign_roles(
     payload: AssignRolesRequest,
-    authorization: str = Header(..., description="Bearer Token")) -> str:
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN]))
+) -> str:
 
     pool = await get_pool()
     cursor_name = "assign_role_result"
     params = (payload.user_id, payload.role_id, cursor_name)
-    
-    # Valido token
-    if authorization is None or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Token inválido o faltante")
-    
+
     async with pool.acquire() as conn:
         try:
             message = ""
@@ -244,5 +237,49 @@ async def assign_roles(
 
         except HTTPException as http_exc:
             raise http_exc
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/asignar-cliente")
+async def assign_client(
+    body: AssignClientRequest,
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN]))
+) -> Dict[str, Any]:
+
+    pool = await get_pool()
+
+    async with pool.acquire() as conn:
+        try:
+            async with conn.transaction():
+                cursor_name = "cur_assign_client"
+
+                # Ejecutar el procedimiento almacenado
+                await conn.execute(
+                    """
+                    CALL sp_assign_client($1, $2, $3, $4);
+                    """,
+                    body.userId,
+                    body.customerId,
+                    body.categorieId,
+                    cursor_name
+                )
+
+                # Leer el contenido del cursor
+                rows = await conn.fetch(f"FETCH ALL FROM {cursor_name}")
+
+                if not rows:
+                    raise HTTPException(status_code=500, detail="El procedimiento no devolvió datos.")
+
+                row = rows[0]
+
+                # Devolver respuesta
+                return {
+                    "message": row["message"],
+                    "insertedCount": row["inserted_count"],
+                    "insertedCategories": row["inserted_categories"],
+                    "failedCategories": row["failed_categories"]
+                }
+
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))

@@ -5,6 +5,22 @@ from fastapi import HTTPException
 from database import get_pool
 from security import decode_token
 
+def get_token_from_header(authorization: str) -> str:
+    try:
+        parts = authorization.split(" ")
+        if len(parts) != 2 or parts[0].lower() != "bearer":
+            raise HTTPException(
+                status_code=401,
+                detail="Formato de Authorization inválido. Use: Bearer {token}"
+            )
+        return parts[1]
+    except AttributeError:
+        raise HTTPException(
+            status_code=401,
+            detail="Encabezado Authorization inválido"
+        )
+
+
 def generate_safe_password(length: int = 10) -> str:
     characters = string.ascii_letters + string.digits + "!@#$%&*?"
     password_list = [

@@ -55,7 +55,9 @@ async def get_supplier_contact(username: str) -> dict:
                 }
             )
 
-async def notify_supplier(username: str = Query(...,example="johnDoe123")):
+async def notify_supplier(
+    username: str = Query(...,example="johnDoe123")
+    ):
     try:
         supplier_contact = await get_supplier_contact(username)
 

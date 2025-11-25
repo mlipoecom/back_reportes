@@ -1,13 +1,15 @@
-from fastapi import UploadFile, Form, HTTPException, APIRouter, Header
+from fastapi import UploadFile, Form, HTTPException, APIRouter, Depends
 import boto3
 import os
 from typing import Dict, Any
 from config import S3_CONFIG
 from database import get_pool
 from datetime import date, datetime
-from utils import get_user_id_from_token
 from routes.categories import get_category_by_id
 from routes.companies import get_customer_by_id
+from dependencies import require_roles
+from roles import UserRole
+
 router = APIRouter(
     prefix="/app/archivos",
     tags=["Archivos"]
@@ -75,7 +77,7 @@ async def call_sp_insert_file(
 
 @router.post("/upload")
 async def upload_file(
-    authorization: str = Header(..., description="Bearer Token", example="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."),
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.COMPANY_USER])),
     customer_id: int = Form(...),
     category_id: int = Form(...),
     report_date: str = Form(...),
@@ -89,7 +91,7 @@ async def upload_file(
 
     customer = await get_customer_by_id(customer_id)
 
-    company_user_id = get_user_id_from_token(authorization)
+    company_user_id = current_user.get("ID")
 
     fecha_reporte_dt = datetime.strptime(report_date, "%Y-%m-%d")
     year = fecha_reporte_dt.year
