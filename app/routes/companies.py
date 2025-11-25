@@ -1,10 +1,9 @@
 import json
-from fastapi import APIRouter, HTTPException, Header, Query, Depends
+from fastapi import APIRouter, HTTPException, Query, Depends
 from fastapi.responses import JSONResponse
 from typing import Dict, Any
 from models import AssignClientRequest
 from database import get_pool
-from utils import get_user_id_from_token, get_company_id_from_token
 
 from dependencies import require_roles
 from roles import UserRole
@@ -56,7 +55,7 @@ async def assign_client(
 
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
-        
+
 @router.get("/get-customers",
             summary="Listar clientes",
             description="Devuelve la lista de clientes de la compañía.",
@@ -100,11 +99,10 @@ async def assign_client(
         },
     }
 )
-async def get_customers(    
-    authorization: str = Header(..., description="Bearer Token", example="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."),
+async def get_customers(
     current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN, UserRole.COMPANY_ADMIN]))
 ):
-    company_id = get_company_id_from_token(authorization)
+    company_id = current_user.get("companyId")
     try:
         async with (await get_pool()).acquire() as conn:
             rows = await conn.fetch("SELECT fn_get_customers($1);", company_id)
@@ -163,10 +161,9 @@ async def get_customers(
     }
 )
 async def get_customers_by_company_user(
-    authorization: str = Header(..., description="Bearer Token", example="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."),
     current_user: dict = Depends(require_roles([UserRole.COMPANY_ADMIN, UserRole.COMPANY_USER]))
 ):
-    company_user_id = get_user_id_from_token(authorization)
+    company_user_id = current_user.get("ID")
     try:
         print("company_user_id: ", company_user_id)
         async with (await get_pool()).acquire() as conn:
@@ -222,11 +219,10 @@ async def get_customers_by_company_user(
     }
 )
 async def get_categories_by_customer_and_company_user(
-    authorization: str = Header(..., description="Bearer Token", example="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."),
     customerId: int = Query(..., description="ID del cliente", example=1),
     current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN, UserRole.COMPANY_USER]))
 ):
-    company_user_id = get_user_id_from_token(authorization)
+    company_user_id = current_user.get("ID")
     try:
         async with (await get_pool()).acquire() as conn:
             rows = await conn.fetch("SELECT fn_get_categories_by_customer_and_company_user($1, $2);", company_user_id, customerId)

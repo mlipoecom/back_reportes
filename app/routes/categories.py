@@ -1,5 +1,4 @@
-from utils import get_supplier_id_from_token
-from fastapi import APIRouter, HTTPException, Depends, Query, Header
+from fastapi import APIRouter, HTTPException, Depends, Query
 from fastapi.responses import JSONResponse
 from database import get_pool
 from models import CategoryCreateRequest, CategoryUpdateRequest
@@ -122,13 +121,9 @@ async def update_category(
 @router.delete("/categoria/{category_id}/eliminar", summary="Elimina o inactiva una categoría")
 async def delete_category(
     category_id: int,
-    authorization: str = Header(..., description="Bearer Token"),
     current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN]))
 ):
-    if authorization is None or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Token inválido o faltante")
-
-    supplier_id = get_supplier_id_from_token(authorization)
+    supplier_id = current_user.get("supplierId")
 
     pool = await get_pool()
 
@@ -159,12 +154,7 @@ async def get_categories(
     name: Optional[str] = Query(None, description="Nombre de la categoría"),
     createdBy: Optional[int] = Query(None, description="ID del creador de la categoría"),
     status: Optional[str] = Query(None, description="Status de l acategoría"),
-    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN, UserRole.CUSTOMER_ADMIN, UserRole.CUSTOMER_USER, UserRole.COMPANY_ADMIN, UserRole.COMPANY_USER])),
-    authorization: str = Header(..., description="Bearer Token")):
-    # Valido token
-    if authorization is None or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Token inválido o faltante")
-
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN, UserRole.CUSTOMER_ADMIN, UserRole.CUSTOMER_USER, UserRole.COMPANY_ADMIN, UserRole.COMPANY_USER]))):
     # Obtengo supplierId
     supplier_id = current_user.get("supplierId")
     if supplier_id is None:

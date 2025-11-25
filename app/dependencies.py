@@ -7,6 +7,17 @@ from utils import get_token_from_header
 def get_current_user(authorization: str = Header(..., description="Bearer Token")) -> dict:
     token = get_token_from_header(authorization)
     payload = decode_token(token)
+
+    # Validate that essential fields exist in the token
+    required_fields = ["ID", "role"]
+    missing_fields = [field for field in required_fields if field not in payload]
+
+    if missing_fields:
+        raise HTTPException(
+            status_code=401,
+            detail=f"Token inválido: faltan campos requeridos ({', '.join(missing_fields)})"
+        )
+
     return payload
 
 
