@@ -161,7 +161,7 @@ async def get_customers(
     }
 )
 async def get_customers_by_company_user(
-    current_user: dict = Depends(require_roles([UserRole.COMPANY_ADMIN, UserRole.COMPANY_USER]))
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.COMPANY_USER]))
 ):
     company_user_id = current_user.get("ID")
     try:
