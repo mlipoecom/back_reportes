@@ -14,6 +14,7 @@ router = APIRouter(
 
 async def call_fn_get_archivos(
     p_id_cliente: int,
+    p_company_user_id: Optional[int] = None,
     p_id_nombre: Optional[str] = None,
     p_nombre_categoria: Optional[str] = None,
     p_fecha_desde: Optional[date] = None,
@@ -24,6 +25,7 @@ async def call_fn_get_archivos(
     """Llama a la función fn_get_files en PostgreSQL y devuelve el JSON procesado."""
     params = (
         p_id_cliente,
+        p_company_user_id,  
         p_id_nombre or "",
         p_nombre_categoria or "",
         p_fecha_desde,
@@ -35,7 +37,7 @@ async def call_fn_get_archivos(
     try:
         async with (await get_pool()).acquire() as conn:
             result = await conn.fetchval(
-                "SELECT fn_get_files($1,$2,$3,$4,$5,$6,$7);",
+                "SELECT fn_get_files($1,$2,$3,$4,$5,$6,$7,$8);",
                 *params
             )
     except Exception as e:
@@ -115,6 +117,8 @@ async def get_archivos(
 
     company_id = current_user.get("companyId")
 
+    user_role_id = current_user.get("role")
+
     fecha_desde = None
     fecha_hasta = None
 
@@ -132,6 +136,7 @@ async def get_archivos(
 
     result = await call_fn_get_archivos(
         p_id_cliente=company_id,
+        p_company_user_id=current_user.get("ID") if user_role_id == UserRole.COMPANY_USER else None,
         p_id_nombre=nombre,
         p_nombre_categoria=categoria,
         p_fecha_desde=fecha_desde,

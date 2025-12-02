@@ -77,7 +77,7 @@ async def call_sp_insert_file(
 
 @router.post("/upload")
 async def upload_file(
-    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.COMPANY_USER])),
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.COMPANY_USER, UserRole.COMPANY_ADMIN])),
     customer_id: int = Form(...),
     category_id: int = Form(...),
     report_date: str = Form(...),
