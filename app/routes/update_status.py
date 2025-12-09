@@ -40,8 +40,8 @@ router = APIRouter(
 )
 async def update_status(
     p_id: int = Query(..., description="ID del registro a actualizar", example=1),
-    p_category: Literal["company", "user", "supplier"] = Query(
-        ..., description="Categoría de la entidad", example="user"
+    p_entity: Literal["company", "user", "supplier", "customer"] = Query(
+        ..., description="Nombre de la entidad", example="user"
     ),
     p_status: Literal["activo", "suspendido", "inactivo"] = Query(
         ..., description="Nuevo estado", example="activo"
@@ -60,7 +60,7 @@ async def update_status(
             result = await conn.fetchval(
                 "SELECT fn_update_status($1, $2, $3)",
                 p_id,
-                p_category,
+                p_entity,
                 p_status
             )
             if result != 'OK':

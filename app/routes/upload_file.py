@@ -16,15 +16,15 @@ router = APIRouter(
 )
 
 
-S3_ENDPOINT = S3_CONFIG["S3_ENDPOINT"]
+#S3_ENDPOINT = S3_CONFIG["S3_ENDPOINT"]
 S3_BUCKET = S3_CONFIG["S3_BUCKET"]
 
 s3 = boto3.client(
-    "s3",
-    endpoint_url=S3_ENDPOINT,
-    aws_access_key_id="test",
-    aws_secret_access_key="test",
-    region_name="us-east-1"
+    "s3"
+   # endpoint_url=S3_ENDPOINT,
+   # aws_access_key_id="test",
+   # aws_secret_access_key="test",
+   # region_name="us-east-1"
 )
 
 def ensure_bucket():
