@@ -366,6 +366,11 @@ async def get_roles(
                 "application/json": {
                     "example": {
                         "info": "Usuarios listados exitosamente",
+                        "pagination": {
+                            "total": 100,
+                            "page": 1,
+                            "pageSize": 10
+                        },
                         "users": [
                             {
                                 "id": 1,
@@ -373,7 +378,9 @@ async def get_roles(
                                 "lastName": "Pérez",
                                 "email": "juan@example.com",
                                 "status": "activo",
-                                "role": "company_admin"
+                                "role": "COMPANY_ADMIN",
+                                "entityId": 1,
+                                "entityType": "Company"
                             }
                         ]
                     }
@@ -403,34 +410,53 @@ async def get_roles(
     }
 )
 async def get_users_by_supplier(
-    limit: Optional[int] = Query(10, description="Cantidad máxima de registros a devolver.", ge=1),
-    offset: Optional[int] = Query(0, description="Cantidad de registros a omitir antes de comenzar la lista.", ge=0),
+    page: Optional[int] = Query(1, description="Número de página para paginado.", ge=1),
+    pageSize: Optional[int] = Query(20, description="Cantidad de registros por página.", ge=1),
+    name: Optional[str] = Query(None, description="Filtrar por nombre del usuario."),
+    lastName: Optional[str] = Query(None, description="Filtrar por apellido del usuario."),
+    entityId: Optional[int] = Query(None, description="Filtrar por ID de entidad (supplier/company/customer)."),
+    roleId: Optional[int] = Query(None, description="Filtrar por ID del rol."),
+    status: Optional[str] = Query(None, description="Filtrar por status (activo/inactivo)."),
     current_user: dict = Depends(require_roles([UserRole.SUPPLIER_ADMIN]))
 ):
     """
     Lista todos los usuarios de las empresas y clientes de un supplier.
     Requiere rol SUPPLIER_ADMIN.
+    Soporta filtrado por nombre, apellido, entidad, rol y status con paginado.
     """
-    supplier_id = current_user.get("entity_id")
+    supplier_id = current_user.get("supplierId")
     
     if supplier_id is None:
         raise HTTPException(status_code=401, detail="No se pudo obtener supplierId del token")
 
     try:
         async with (await get_pool()).acquire() as conn:
-            rows = await conn.fetch(
-                "SELECT fn_get_users_by_supplier($1, $2, $3);",
+            row = await conn.fetchval(
+                "SELECT fn_get_users_by_supplier($1, $2, $3, $4, $5, $6, $7, $8);",
                 supplier_id,
-                limit,
-                offset
+                name,
+                lastName,
+                entityId,
+                roleId,
+                status,
+                page,
+                pageSize
             )
 
+            if row is None:
+                raise HTTPException(status_code=500, detail="La función no devolvió datos")
+
             # Convertir jsonb a dict
-            users = [json.loads(record["fn_get_users_by_supplier"]) for record in rows]
+            result = json.loads(row)
 
             return {
                 "info": "Usuarios listados exitosamente",
-                "users": users
+                "pagination": {
+                    "total": result.get("total", 0),
+                    "page": result.get("page", 1),
+                    "pageSize": result.get("pageSize", pageSize)
+                },
+                "users": result.get("data", [])
             }
 
     except Exception as e:
