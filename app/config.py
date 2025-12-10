@@ -23,7 +23,6 @@ TOKEN_CONFIG = {
 
 
 S3_CONFIG = {
-    # "S3_ENDPOINT": "https://s3.localhost.localstack.cloud:4566",
     "S3_ENDPOINT": "http://127.0.0.1:4566",
     "S3_BUCKET": "portal-reportes"
 }
