@@ -15,23 +15,27 @@ router = APIRouter(
     tags=["Archivos"]
 )
 
-
-#S3_ENDPOINT = S3_CONFIG["S3_ENDPOINT"]
-S3_BUCKET = S3_CONFIG["S3_BUCKET"]
+# Configuración S3 - usar valores por defecto si no están definidos
+S3_ENDPOINT = S3_CONFIG.get("S3_ENDPOINT", "http://127.0.0.1:4566")
+S3_BUCKET = S3_CONFIG.get("S3_BUCKET", "portal-informes-dev")
 
 s3 = boto3.client(
-    "s3"
-   # endpoint_url=S3_ENDPOINT,
-   # aws_access_key_id="test",
-   # aws_secret_access_key="test",
-   # region_name="us-east-1"
+    "s3",
+    endpoint_url=S3_ENDPOINT,
+    aws_access_key_id="test",
+    aws_secret_access_key="test",
+    region_name="us-east-1"
 )
 
 def ensure_bucket():
-    buckets = [b["Name"] for b in s3.list_buckets().get("Buckets", [])]
-    if S3_BUCKET not in buckets:
-        s3.create_bucket(Bucket=S3_BUCKET)
-ensure_bucket()
+    """Crear bucket si no existe. Se ejecuta lazy (cuando se necesita)."""
+    try:
+        buckets = [b["Name"] for b in s3.list_buckets().get("Buckets", [])]
+        if S3_BUCKET not in buckets:
+            s3.create_bucket(Bucket=S3_BUCKET)
+    except Exception as e:
+        # Si LocalStack no está disponible, intentar en el primer endpoint que lo necesite
+        print(f"Warning: No se pudo verificar/crear el bucket S3: {e}")
 
 async def call_sp_insert_file(
     p_name: str,
@@ -86,6 +90,8 @@ async def upload_file(
     if not file:
         raise HTTPException(status_code=400, detail="Debe incluir un archivo")
 
+    # Asegurar que el bucket existe antes de subir archivo
+    ensure_bucket()
 
     category = await get_category_by_id(category_id)
 

@@ -354,3 +354,84 @@ async def get_roles(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/usuarios/listar",
+        summary="Listar usuarios por supplier",
+        description="Devuelve la lista de todos los usuarios de las empresas y clientes de un supplier (SUPPLIER_ADMIN).",
+        responses={
+        200: {
+            "description": "Ejecución exitosa",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "info": "Usuarios listados exitosamente",
+                        "users": [
+                            {
+                                "id": 1,
+                                "name": "Juan",
+                                "lastName": "Pérez",
+                                "email": "juan@example.com",
+                                "status": "activo",
+                                "role": "company_admin"
+                            }
+                        ]
+                    }
+                }
+            },
+        },
+        401: {
+            "description": "No autorizado o sin supplier_id en token",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "No se pudo obtener supplierId del token"
+                    }
+                }
+            },
+        },
+        500: {
+            "description": "Error interno del servidor",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "Error en la BD: conexión fallida"
+                    }
+                }
+            },
+        },
+    }
+)
+async def get_users_by_supplier(
+    limit: Optional[int] = Query(10, description="Cantidad máxima de registros a devolver.", ge=1),
+    offset: Optional[int] = Query(0, description="Cantidad de registros a omitir antes de comenzar la lista.", ge=0),
+    current_user: dict = Depends(require_roles([UserRole.SUPPLIER_ADMIN]))
+):
+    """
+    Lista todos los usuarios de las empresas y clientes de un supplier.
+    Requiere rol SUPPLIER_ADMIN.
+    """
+    supplier_id = current_user.get("entity_id")
+    
+    if supplier_id is None:
+        raise HTTPException(status_code=401, detail="No se pudo obtener supplierId del token")
+
+    try:
+        async with (await get_pool()).acquire() as conn:
+            rows = await conn.fetch(
+                "SELECT fn_get_users_by_supplier($1, $2, $3);",
+                supplier_id,
+                limit,
+                offset
+            )
+
+            # Convertir jsonb a dict
+            users = [json.loads(record["fn_get_users_by_supplier"]) for record in rows]
+
+            return {
+                "info": "Usuarios listados exitosamente",
+                "users": users
+            }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
