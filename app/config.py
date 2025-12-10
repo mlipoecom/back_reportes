@@ -23,6 +23,5 @@ TOKEN_CONFIG = {
 
 
 S3_CONFIG = {
-    "S3_ENDPOINT": "http://127.0.0.1:4566",
-    "S3_BUCKET": "portal-reportes"
+    "S3_BUCKET": "portal-informes-dev"
 }

@@ -18,7 +18,7 @@ router = APIRouter(
 
 #S3_ENDPOINT = S3_CONFIG["S3_ENDPOINT"]
 S3_BUCKET = S3_CONFIG["S3_BUCKET"]
-
+BUCKET_PATH = "s3://portal-informes-dev"
 s3 = boto3.client(
     "s3"
    # endpoint_url=S3_ENDPOINT,
@@ -113,7 +113,7 @@ async def upload_file(
 
     db_response = await call_sp_insert_file(
         file_name,  
-        f"{customer['name']}/{category['name']}", # path
+        f"{BUCKET_PATH}/{customer['name']}/{category['name']}/{file_name}", # path
         str(date.today()), # upload date
         f"{year}-{month}-{day}", # report date
         category_id, 
