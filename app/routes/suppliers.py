@@ -354,3 +354,81 @@ async def get_roles(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete(
+    "/{companyId}/eliminar",
+    summary="Eliminar o inactivar empresa",
+    description=(
+        "Elimina físicamente una empresa si no tiene dependencias. "
+        "Si tiene dependencias, la marca como inactiva. "
+        "Solo accesible por Super Admin."
+    ),
+    responses={
+        200: {
+            "description": "Resultado de la operación",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "message": "Empresa eliminada correctamente",
+                        "affectedRows": 1
+                    }
+                }
+            },
+        },
+        404: {
+            "description": "Empresa no encontrada",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "message": "La empresa no existe",
+                        "affectedRows": 0
+                    }
+                }
+            },
+        },
+        500: {
+            "description": "Error interno",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "message": "Error en la BD",
+                        "affectedRows": 0
+                    }
+                }
+            },
+        },
+    }
+)
+
+
+async def delete_company(
+    companyId: int,
+    current_user: dict = Depends(require_roles([UserRole.SUPPLIER_ADMIN]))
+):
+    user_id = current_user.get("ID")
+    if user_id is None:
+        raise HTTPException(status_code=401, detail="No se pudo obtener userId del token")
+
+    try:
+        async with (await get_pool()).acquire() as conn:
+            row = await conn.fetchrow(
+                "SELECT fn_delete_company($1, $2);",
+                user_id,
+                companyId
+            )
+
+            if row is None:
+                raise HTTPException(status_code=500, detail="La función no devolvió datos")
+
+            # Ajusta la clave si tu función DB devuelve con otro alias
+            result = json.loads(row["fn_delete_company"])
+
+            # Si la función indica affectedRows == 0, devolvemos 404 (consistente con otros endpoints)
+            if result.get("affectedRows") == 0:
+                return JSONResponse(status_code=404, content=result)
+
+            return result
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
