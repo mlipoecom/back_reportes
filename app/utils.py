@@ -1,9 +1,16 @@
 import random
 import string
 import json
+
+import boto3
+from botocore.exceptions import ClientError
 from fastapi import HTTPException
+
 from database import get_pool
 from security import decode_token
+
+
+s3_client = boto3.client("s3")
 
 def get_token_from_header(authorization: str) -> str:
     try:
@@ -123,4 +130,40 @@ def get_supplier_id_from_token(authorization: str) -> int:
         raise HTTPException(status_code=401, detail="Token sin userId")
 
     return supplier_id
+
+
+def generate_presigned_url(s3_path: str, expiration: int = 30) -> str:
+    """
+    Genera una URL pre-firmada para descargar un archivo de S3.
+
+    Args:
+        s3_path: Ruta S3 como 's3://bucket-name/path/to/file.pdf'
+        expiration: Tiempo de expiración en segundos (por defecto: 30 segundos)
+
+    Returns:
+        URL pre-firmada como string.
+    """
+    try:
+        # Desarmamos la ruta S3
+        s3_path = s3_path.replace("s3://", "")
+        bucket_name = s3_path.split("/")[0]
+        object_key = "/".join(s3_path.split("/")[1:])
+
+        # Generamos la URL pre-firmada con un metodo de boto3
+        presigned_url = s3_client.generate_presigned_url(
+            "get_object",
+            Params={
+                "Bucket": bucket_name,
+                "Key": object_key,
+            },
+            ExpiresIn=expiration,
+        )
+
+        return presigned_url
+    except ClientError as e:
+        print(f"Error generando URL pre-firmada: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Error generando URL pre-firmada para el archivo",
+        )
 

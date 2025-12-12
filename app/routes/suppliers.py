@@ -12,6 +12,7 @@ router = APIRouter(
     prefix="/proveedor",
     tags=["Proveedores"]
 )
+    
 
 async def call_sp_insert_company(
     p_name: str,
@@ -48,6 +49,7 @@ async def call_sp_insert_company(
     id_val = rows[0].get("id", 0)
 
     return {"info": info, "id": id_val}
+
 
 
 @router.post(
@@ -124,6 +126,7 @@ async def generate_and_create_company(
             content={"info": f"Error al crear empresa: {e}", "id": 0}
         )
 
+
 async def call_sp_insert_customer(
     p_name: str,
     p_business_name: str,
@@ -159,6 +162,7 @@ async def call_sp_insert_customer(
     id_val = rows[0].get("id", 0)
 
     return {"info": info, "id": id_val}
+
 
 
 @router.post(
@@ -232,6 +236,7 @@ async def generate_and_create_customer(
             status_code=500,
             content={"info": f"Error al crear empresa: {e}", "id": 0}
         )
+
 
 @router.get("/empresa/listar",
         summary="Listar compañías.",
@@ -409,6 +414,8 @@ async def get_roles(
         },
     }
 )
+
+
 async def get_users_by_supplier(
     page: Optional[int] = Query(1, description="Número de página para paginado.", ge=1),
     pageSize: Optional[int] = Query(20, description="Cantidad de registros por página.", ge=1),
@@ -458,6 +465,84 @@ async def get_users_by_supplier(
                 },
                 "users": result.get("data", [])
             }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete(
+    "/{companyId}/eliminar",
+    summary="Eliminar o inactivar empresa",
+    description=(
+        "Elimina físicamente una empresa si no tiene dependencias. "
+        "Si tiene dependencias, la marca como inactiva. "
+        "Solo accesible por Supplier Admin."
+    ),
+    responses={
+        200: {
+            "description": "Resultado de la operación",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "message": "Empresa eliminada correctamente",
+                        "affectedRows": 1
+                    }
+                }
+            },
+        },
+        404: {
+            "description": "Empresa no encontrada",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "message": "La empresa no existe",
+                        "affectedRows": 0
+                    }
+                }
+            },
+        },
+        500: {
+            "description": "Error interno",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "message": "Error en la BD",
+                        "affectedRows": 0
+                    }
+                }
+            },
+        },
+    }
+)
+
+
+async def delete_company(
+    companyId: int,
+    current_user: dict = Depends(require_roles([UserRole.SUPPLIER_ADMIN]))
+):
+    user_id = current_user.get("ID")
+    if user_id is None:
+        raise HTTPException(status_code=401, detail="No se pudo obtener userId del token")
+
+    try:
+        async with (await get_pool()).acquire() as conn:
+            row = await conn.fetchrow(
+                "SELECT fn_delete_company($1, $2);",
+                user_id,
+                companyId
+            )
+
+            if row is None:
+                raise HTTPException(status_code=500, detail="La función no devolvió datos")
+
+            # Ajusta la clave si tu función DB devuelve con otro alias
+            result = json.loads(row["fn_delete_company"])
+
+            # Si la función indica affectedRows == 0, devolvemos 404 (consistente con otros endpoints)
+            if result.get("affectedRows") == 0:
+                return JSONResponse(status_code=404, content=result)
+
+            return result
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -218,6 +218,9 @@ async def get_customers_by_company_user(
         },
     }
 )
+
+
+
 async def get_categories_by_customer_and_company_user(
     customerId: int = Query(..., description="ID del cliente", example=1),
     current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN, UserRole.COMPANY_USER]))

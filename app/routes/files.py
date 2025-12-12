@@ -6,6 +6,7 @@ import json
 from database import get_pool
 from dependencies import require_roles
 from roles import UserRole
+from utils import generate_presigned_url
 
 router = APIRouter(
     prefix="/app/archivos",
@@ -173,10 +174,11 @@ async def download_file_by_id(
     async with pool.acquire() as conn:
         async with conn.transaction():
             file_data = await get_file_by_id(file_id)
-            print("file_data: ",file_data)
+            print("file_data: ", file_data)
             await log_file_download(user_id, file_id, ip, "log_file_download_result")
+            presigned_url = generate_presigned_url(file_data["fn_get_file_path"])
+    return presigned_url
 
-    return file_data['fn_get_file_path']
 
 async def get_file_by_id(file_id: int) -> Any:
     """Obtiene el archivo desde la base de datos utilizando el SP correspondiente."""
