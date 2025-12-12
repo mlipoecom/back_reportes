@@ -12,6 +12,7 @@ router = APIRouter(
     prefix="/proveedor",
     tags=["Proveedores"]
 )
+    
 
 async def call_sp_insert_company(
     p_name: str,
@@ -48,6 +49,7 @@ async def call_sp_insert_company(
     id_val = rows[0].get("id", 0)
 
     return {"info": info, "id": id_val}
+
 
 
 @router.post(
@@ -124,6 +126,7 @@ async def generate_and_create_company(
             content={"info": f"Error al crear empresa: {e}", "id": 0}
         )
 
+
 async def call_sp_insert_customer(
     p_name: str,
     p_business_name: str,
@@ -159,6 +162,7 @@ async def call_sp_insert_customer(
     id_val = rows[0].get("id", 0)
 
     return {"info": info, "id": id_val}
+
 
 
 @router.post(
@@ -232,6 +236,7 @@ async def generate_and_create_customer(
             status_code=500,
             content={"info": f"Error al crear empresa: {e}", "id": 0}
         )
+
 
 @router.get("/empresa/listar",
         summary="Listar compañías.",
@@ -355,13 +360,123 @@ async def get_roles(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
+@router.get("/usuarios/listar",
+        summary="Listar usuarios por supplier",
+        description="Devuelve la lista de todos los usuarios de las empresas y clientes de un supplier (SUPPLIER_ADMIN).",
+        responses={
+        200: {
+            "description": "Ejecución exitosa",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "info": "Usuarios listados exitosamente",
+                        "pagination": {
+                            "total": 100,
+                            "page": 1,
+                            "pageSize": 10
+                        },
+                        "users": [
+                            {
+                                "id": 1,
+                                "name": "Juan",
+                                "lastName": "Pérez",
+                                "email": "juan@example.com",
+                                "status": "activo",
+                                "role": "COMPANY_ADMIN",
+                                "entityId": 1,
+                                "entityType": "Company"
+                            }
+                        ]
+                    }
+                }
+            },
+        },
+        401: {
+            "description": "No autorizado o sin supplier_id en token",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "No se pudo obtener supplierId del token"
+                    }
+                }
+            },
+        },
+        500: {
+            "description": "Error interno del servidor",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "Error en la BD: conexión fallida"
+                    }
+                }
+            },
+        },
+    }
+)
+
+
+async def get_users_by_supplier(
+    page: Optional[int] = Query(1, description="Número de página para paginado.", ge=1),
+    pageSize: Optional[int] = Query(20, description="Cantidad de registros por página.", ge=1),
+    name: Optional[str] = Query(None, description="Filtrar por nombre del usuario."),
+    lastName: Optional[str] = Query(None, description="Filtrar por apellido del usuario."),
+    entityId: Optional[int] = Query(None, description="Filtrar por ID de entidad (supplier/company/customer)."),
+    roleId: Optional[int] = Query(None, description="Filtrar por ID del rol."),
+    status: Optional[str] = Query(None, description="Filtrar por status (activo/inactivo)."),
+    current_user: dict = Depends(require_roles([UserRole.SUPPLIER_ADMIN]))
+):
+    """
+    Lista todos los usuarios de las empresas y clientes de un supplier.
+    Requiere rol SUPPLIER_ADMIN.
+    Soporta filtrado por nombre, apellido, entidad, rol y status con paginado.
+    """
+    supplier_id = current_user.get("supplierId")
+    
+    if supplier_id is None:
+        raise HTTPException(status_code=401, detail="No se pudo obtener supplierId del token")
+
+    try:
+        async with (await get_pool()).acquire() as conn:
+            row = await conn.fetchval(
+                "SELECT fn_get_users_by_supplier($1, $2, $3, $4, $5, $6, $7, $8);",
+                supplier_id,
+                name,
+                lastName,
+                entityId,
+                roleId,
+                status,
+                page,
+                pageSize
+            )
+
+            if row is None:
+                raise HTTPException(status_code=500, detail="La función no devolvió datos")
+
+            # Convertir jsonb a dict
+            result = json.loads(row)
+
+            return {
+                "info": "Usuarios listados exitosamente",
+                "pagination": {
+                    "total": result.get("total", 0),
+                    "page": result.get("page", 1),
+                    "pageSize": result.get("pageSize", pageSize)
+                },
+                "users": result.get("data", [])
+            }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.delete(
     "/{companyId}/eliminar",
     summary="Eliminar o inactivar empresa",
     description=(
         "Elimina físicamente una empresa si no tiene dependencias. "
         "Si tiene dependencias, la marca como inactiva. "
-        "Solo accesible por Super Admin."
+        "Solo accesible por Supplier Admin."
     ),
     responses={
         200: {
@@ -431,4 +546,3 @@ async def delete_company(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
