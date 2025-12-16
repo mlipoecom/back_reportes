@@ -47,9 +47,9 @@ async def update_status(
         ..., description="Nuevo estado", example="activo"
     ),
     authorization: str = Header(..., description="Bearer Token"),
-    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN]))
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN, UserRole.COMPANY_ADMIN]))
     ):
-
+    print("datos recibidos:",  p_id)
     # Valido token
     if authorization is None or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Token inválido o faltante")
