@@ -102,22 +102,14 @@ async def upload_file(
     day = fecha_reporte_dt.day
     _, ext = os.path.splitext(file.filename)
 
-    file_name = f"{customer['name']}_{category['name']}_{day}_{month}_{year}__{guid}{ext}"
-    key = f"{customer['name']}/{category['name']}/{file_name}"
+    file_name = f"{customer['name']}_{category['name']}_{day}_{month}_{year}" # nombre del archivo en pantalla, columna name
+    key = f"{customer['name']}/{category['name']}/{file_name}_{guid}{ext}" # nombre del archivo en S3
 
     s3.upload_fileobj(file.file, S3_BUCKET, key)
 
-    print("Nombre:", file_name)
-    print("Path:", f"{customer['name']}/{category['name']}")
-    print("Upload:", str(date.today()))
-    print("Report:", f"{year}-{month}-{day}")
-    print("Category:", category['name'])
-    print("Company User:", company_user_id)
-    print("Customer:", customer['name'])
-
     db_response = await call_sp_insert_file(
         file_name,  
-        f"{BUCKET_PATH}/{customer['name']}/{category['name']}/{file_name}", # path
+        f"{BUCKET_PATH}/{customer['name']}/{category['name']}/{file_name}_{guid}{ext}", # path completo del archivo en S3
         str(date.today()), # upload date
         f"{year}-{month}-{day}", # report date
         category_id, 
