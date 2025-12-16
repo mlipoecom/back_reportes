@@ -16,7 +16,7 @@ router = APIRouter(
 @router.post("/asignar-cliente")
 async def assign_client(
     body: AssignClientRequest,
-    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN]))
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN, UserRole.COMPANY_ADMIN]))
 ) -> Dict[str, Any]:
 
     pool = await get_pool()
@@ -26,14 +26,13 @@ async def assign_client(
             async with conn.transaction():
                 cursor_name = "cur_assign_client"
 
-                # Ejecutar el procedimiento almacenado
                 await conn.execute(
                     """
                     CALL sp_assign_client($1, $2, $3, $4);
                     """,
                     body.userId,
                     body.customerId,
-                    body.categorieId,
+                    body.categoryIds,
                     cursor_name
                 )
 
@@ -111,6 +110,82 @@ async def get_customers(
                 content={
                     "info": "Clientes listados exitosamente",
                     "customers": customers,
+                }
+            )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/usuarios/listar", 
+        summary="Listar usuarios de la compañía.",
+        description="Devuelve la lista de usuarios de la compañía.",
+        responses={
+        200: {
+            "description": "Ejecución exitosa",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "info": "Usuarios listados exitosamente",
+                        "users": [
+                            {
+                                "id": 1,
+                                "name": "Usuario 1",
+                                "status": "activo",
+                                "companyId": 1,
+                            }
+                        ]
+                    }
+                }
+            },
+        },
+        500: {
+            "description": "Error interno del servidor",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "info": "Error en la BD: conexión fallida",
+                        "users": []
+                    }
+                }
+            },
+        },
+    }
+)
+async def get_users(
+    name: str = None,
+    last_name: str = None,
+    user_id: int = None,
+    user_name: str = None,
+    status: str = None,
+    role: str = None,
+    page: int = 1,
+    page_size: int = 20,
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN, UserRole.COMPANY_ADMIN]))
+):
+    company_id = current_user.get("companyId")
+    try:
+        async with (await get_pool()).acquire() as conn:
+            result = await conn.fetchval(
+                "SELECT fn_get_users_by_company($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+                company_id,
+                name,
+                last_name,
+                user_id,
+                user_name,
+                status,
+                role,
+                page,
+                page_size
+            )
+            
+            data = json.loads(result)
+            print("users: ", data)
+            
+            return JSONResponse(
+                content={
+                    "info": "Usuarios listados exitosamente",
+                    "totalCount": data["totalCount"],
+                    "users": data["users"],
                 }
             )
     except Exception as e:

@@ -9,6 +9,7 @@ from routes.categories import get_category_by_id
 from routes.companies import get_customer_by_id
 from dependencies import require_roles
 from roles import UserRole
+import uuid
 
 router = APIRouter(
     prefix="/app/archivos",
@@ -94,11 +95,14 @@ async def upload_file(
     company_user_id = current_user.get("ID")
 
     fecha_reporte_dt = datetime.strptime(report_date, "%Y-%m-%d")
+
+    guid = str(uuid.uuid4()).replace("-", "")
     year = fecha_reporte_dt.year
     month = fecha_reporte_dt.month
     day = fecha_reporte_dt.day
     _, ext = os.path.splitext(file.filename)
-    file_name = f"{customer['name']}_{category['name']}_{month}_{year}{ext}"
+
+    file_name = f"{customer['name']}_{category['name']}_{day}_{month}_{year}__{guid}{ext}"
     key = f"{customer['name']}/{category['name']}/{file_name}"
 
     s3.upload_fileobj(file.file, S3_BUCKET, key)

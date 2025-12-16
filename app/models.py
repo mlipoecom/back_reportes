@@ -73,9 +73,9 @@ class AssignRolesRequest(BaseModel):
     role_id: int = Field(..., example=1, description="ID del rol")
 
 class AssignClientRequest(BaseModel):
-    userId: int
-    customerId: int
-    categorieId: List[int]
+    userId: int = Field(..., example=1, description="ID del usuario")
+    customerId: int = Field(..., example=1, description="ID del cliente")
+    categoryIds: List[int] = Field(..., example=[1, 2, 3], description="IDs de las categorías")
 
 class CategoryCreateRequest(BaseModel):
     name: str
