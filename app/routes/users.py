@@ -66,6 +66,38 @@ async def call_sp_insert_user(
     }
 
 
+async def assign_role_to_user(user_id: int, role_id: int) -> None:
+    print(f"assign_role_to_user called with user_id: {user_id}, role_id: {role_id}")
+    pool = await get_pool()
+    cursor_name = "assign_role_result"
+    params = (user_id, role_id, cursor_name)
+
+    async with pool.acquire() as conn:
+        try:
+            message = ""
+            async with conn.transaction():
+                await conn.execute("CALL sp_assign_role($1, $2, $3);", *params)
+
+                rows = await conn.fetch(f'FETCH ALL IN "{cursor_name}";')
+
+                if not rows:
+                    raise HTTPException(status_code=500, detail="Error en la BD: SP no devolvió datos")
+
+                message = rows[0].get("message")
+                print(f"SP message: {message}")
+                if not message:
+                    raise HTTPException(status_code=500, detail="Error en la BD: respuesta inválida del SP")
+
+                # Detectar errores según el texto del mensaje
+                if any(word in message.lower() for word in ["error"]):
+                    raise HTTPException(status_code=400, detail=message)
+
+        except HTTPException as http_exc:
+            raise http_exc
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post(
     "/usuario/crear",
     summary="Crear usuario",
@@ -111,6 +143,15 @@ async def call_sp_insert_user(
 async def generate_and_create_user(
     user_data: UserGenerate,
     current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN]))):
+    print(f"user_data: {user_data}")
+    role_name_to_id = {
+        "super_admin": UserRole.SUPER_ADMIN,
+        "supplier_admin": UserRole.SUPPLIER_ADMIN,
+        "customer_admin": UserRole.CUSTOMER_ADMIN,
+        "customer_user": UserRole.CUSTOMER_USER,
+        "company_admin": UserRole.COMPANY_ADMIN,
+        "company_user": UserRole.COMPANY_USER,
+    }
     user_id = current_user.get("ID")
 
     try:
@@ -145,6 +186,15 @@ async def generate_and_create_user(
                 "id": 0
             }
         )
+    
+    # Assign role if provided
+    if user_data.role is not None:
+        print(f"roleName: {user_data.role}")
+        role_id = role_name_to_id.get(user_data.role.lower())
+        print(f"role_id: {role_id}")
+        if role_id is None:
+            raise HTTPException(status_code=400, detail=f"Rol '{user_data.role}' no válido")
+        await assign_role_to_user(db_response["id"], role_id)
 
     try:
         send_user_password_email(
@@ -209,36 +259,10 @@ async def assign_roles(
     payload: AssignRolesRequest,
     current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN]))
 ) -> str:
+    print('payload:', payload)
+    await assign_role_to_user(payload.user_id, payload.role_id)
 
-    pool = await get_pool()
-    cursor_name = "assign_role_result"
-    params = (payload.user_id, payload.role_id, cursor_name)
-
-    async with pool.acquire() as conn:
-        try:
-            message = ""
-            async with conn.transaction():
-                await conn.execute("CALL sp_assign_role($1, $2, $3);", *params)
-
-                rows = await conn.fetch(f'FETCH ALL IN "{cursor_name}";')
-
-                if not rows:
-                    raise HTTPException(status_code=500, detail="Error en la BD: SP no devolvió datos")
-
-                message = rows[0].get("message")
-                if not message:
-                    raise HTTPException(status_code=500, detail="Error en la BD: respuesta inválida del SP")
-
-                # Detectar errores según el texto del mensaje
-                if any(word in message.lower() for word in ["error"]):
-                    raise HTTPException(status_code=400, detail=message)
-
-            return JSONResponse(status_code=200, content={"info": message})
-
-        except HTTPException as http_exc:
-            raise http_exc
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+    return JSONResponse(status_code=200, content={"info": "Rol asignado exitosamente"})
 
 
 @router.post("/asignar-cliente")

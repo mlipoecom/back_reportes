@@ -10,6 +10,7 @@ class UserGenerate(BaseModel):
     companyId: Optional[int] = Field(None, example=1, description="ID de la compañía a la que pertenece el usuario")
     customerId: Optional[int] = Field(None, example=1, description="ID del cliente al que pertenece el usuario")
     status: str = Field('activo', description="Estado inicial del usuario ('activo', 'suspendido', 'inactivo')")
+    role: Optional[str] = Field(None, example="supplier_admin", description="Nombre del rol a asignar al usuario")
 
 class CompanyGenerate(BaseModel):
     name: str = Field(..., max_length=50, example="Acme", description="Nombre fantasía de la empresa")
