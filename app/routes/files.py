@@ -116,7 +116,7 @@ async def get_archivos(
 ) -> Dict[str, Any]:
     """Endpoint principal: obtiene los archivos de una compañía según filtros."""
 
-    company_id = current_user.get("companyId")
+    customer_id = current_user.get("customerId")
 
     user_role_id = current_user.get("role")
 
@@ -136,7 +136,7 @@ async def get_archivos(
             raise HTTPException(status_code=400, detail="Fecha inválida en fecha_hasta")
 
     result = await call_fn_get_archivos(
-        p_id_cliente=company_id,
+        p_id_cliente=customer_id,
         p_company_user_id=current_user.get("ID") if user_role_id == UserRole.COMPANY_USER else None,
         p_id_nombre=nombre,
         p_nombre_categoria=categoria,
