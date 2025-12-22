@@ -37,6 +37,19 @@ class CustomerGenerateResponse(BaseModel):
     info: str = Field(example="Cliente creado exitosamente.")
     id: int = Field(example=1)
 
+class CustomerUpdate(BaseModel):
+    name: Optional[str] = Field(..., max_length=50, example="Nuevo Nombre", description="Nombre fantasía del cliente")
+    businessName: Optional[str] = Field(..., max_length=50, example="Nueva Razón Social", description="Razón social del cliente")
+    email: Optional[EmailStr] = Field(..., example="nuevo@email.com", description="Email del cliente")
+    description: Optional[str] = Field(..., max_length=256, example="Nueva descripción", description="Descripción del cliente")
+
+class CompanyUpdate(BaseModel):
+    name: Optional[str] = Field(..., max_length=50, example="Acme", description="Nombre fantasía de la empresa")
+    businessName: Optional[str] = Field(..., max_length=50, example="Acme SA", description="Razón social de la empresa")
+    externalId: Optional[str] = Field(..., max_length=50, example="1234567890212", description="Identificador externo de la empresa")
+    description: Optional[str] = Field(..., max_length=256, example="Consultance services", description="Descripción de la empresa")
+    email: EmailStr = Field(..., example="info@acme.com", description="Email de la empresa")
+
 class SupplierGenerate(BaseModel):
     name: str = Field(..., max_length=50, example="Ecom", description="Nombre fantasía del proveedor")
     businessName: str = Field(..., max_length=50, example="Ecom Center SRL", description="Razón social del proveedor")

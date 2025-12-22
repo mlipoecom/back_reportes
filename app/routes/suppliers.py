@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, Header, Query, Depends
 from fastapi.responses import JSONResponse
 from datetime import date
 from typing import Dict, Any, Optional
-from models import CompanyGenerate, CustomerGenerate, CompanyGenerateResponse, CustomerGenerateResponse
+from models import CompanyGenerate, CompanyUpdate, CustomerGenerate, CompanyGenerateResponse, CustomerGenerateResponse
 from database import get_pool
 from dependencies import require_roles
 from roles import UserRole
@@ -520,15 +520,15 @@ async def delete_company(
     companyId: int,
     current_user: dict = Depends(require_roles([UserRole.SUPPLIER_ADMIN]))
 ):
-    user_id = current_user.get("ID")
-    if user_id is None:
-        raise HTTPException(status_code=401, detail="No se pudo obtener userId del token")
+    supplier_id = current_user.get("supplierId")
+    if supplier_id is None:
+        raise HTTPException(status_code=401, detail="No se pudo obtener supplierId del token")
 
     try:
         async with (await get_pool()).acquire() as conn:
             row = await conn.fetchrow(
-                "SELECT fn_delete_company($1, $2);",
-                user_id,
+                "SELECT fn_update_company($1, $2, $3, $4, $5, $6);",
+                supplier_id,
                 companyId
             )
 
@@ -546,3 +546,90 @@ async def delete_company(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+
+    
+@router.put(
+    "/{companyId}/editar",
+    summary="Editar",
+    description=(
+        "Modifica los detalles de una empresa existente."
+    ),
+    responses={
+        200: {
+            "description": "Resultado de la operación",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "message": "Empresa modificada correctamente",
+                        "affectedRows": 1
+                    }
+                }
+            },
+        },
+        404: {
+            "description": "Empresa no encontrada",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "message": "La empresa no existe",
+                        "affectedRows": 0
+                    }
+                }
+            },
+        },
+        500: {
+            "description": "Error interno",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "message": "Error en la BD",
+                        "affectedRows": 0
+                    }
+                }
+            },
+        },
+    }
+)
+
+
+async def edit_company(
+    companyId: int,
+    company_data: CompanyUpdate,
+    current_user: dict = Depends(require_roles([UserRole.SUPPLIER_ADMIN]))
+):
+    supplier_id = current_user.get("supplierId")
+
+    if supplier_id is None:
+        raise HTTPException(status_code=401, detail="No se pudo obtener supplierId del token")
+    
+    user_id = current_user.get("ID")
+
+    print("supp idL:", supplier_id)
+    try:
+        async with (await get_pool()).acquire() as conn:
+            row = await conn.fetchrow(
+                "SELECT fn_update_company($1, $2, $3, $4, $5, $6, $7);",
+                user_id,
+                companyId,
+                company_data.name,
+                company_data.businessName,
+                company_data.externalId,
+                company_data.description,
+                company_data.email
+            )
+
+            if row is None:
+                raise HTTPException(status_code=500, detail="La función no devolvió datos")
+
+            # Ajusta la clave si tu función DB devuelve con otro alias
+            result = row["fn_update_company"]
+
+            # Si la función indica affectedRows == 0, devolvemos 404 (consistente con otros endpoints)
+            if result.get("affectedRows") == 0:
+                return JSONResponse(status_code=404, content=result)
+
+            return result
+
+    except Exception as e:
+        print("ERROR REAL:", repr(e))
