@@ -50,6 +50,17 @@ class CompanyUpdate(BaseModel):
     description: Optional[str] = Field(..., max_length=256, example="Consultance services", description="Descripción de la empresa")
     email: EmailStr = Field(..., example="info@acme.com", description="Email de la empresa")
 
+class UserUpdate(BaseModel):
+    name: str = Field(..., max_length=50, example="John", description="Nombre del usuario")
+    lastName: str = Field(..., max_length=50, example="Doe", description="Apellido del usuario")
+    email: EmailStr = Field(..., example="john.doe@ecom.com.uy", description="Email del usuario")
+    externalId: str = Field(..., max_length=50, example="johnDoe123", description="Identificador externo del usuario")
+    supplierId: Optional[int] = Field(None, example=1, description="ID del proveedor al que pertenece el usuario")
+    companyId: Optional[int] = Field(None, example=1, description="ID de la compañía a la que pertenece el usuario")
+    customerId: Optional[int] = Field(None, example=1, description="ID del cliente al que pertenece el usuario")
+    status: str = Field('activo', description="Estado inicial del usuario ('activo', 'suspendido', 'inactivo')")
+    role: Optional[str] = Field(None, example="supplier_admin", description="Nombre del rol a asignar al usuario")
+
 class SupplierGenerate(BaseModel):
     name: str = Field(..., max_length=50, example="Ecom", description="Nombre fantasía del proveedor")
     businessName: str = Field(..., max_length=50, example="Ecom Center SRL", description="Razón social del proveedor")
