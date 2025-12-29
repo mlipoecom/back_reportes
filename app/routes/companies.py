@@ -236,9 +236,13 @@ async def get_users(
     }
 )
 async def get_customers_by_company_user(
-    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.COMPANY_USER]))
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.COMPANY_USER])),
+    p_user_id: int = Query(None, alias="userId", description="ID del usuario de la compañía", example=1)
 ):
-    company_user_id = current_user.get("ID")
+    if current_user.get("role") == UserRole.COMPANY_USER:
+        company_user_id = current_user.get("ID") # Si es usuario informante, se obtiene el ID del usuario del token
+    else: 
+        company_user_id = p_user_id # Si es administrador o superadmin, se obtiene el ID del usuario pasado por parámetro
     try:
         print("company_user_id: ", company_user_id)
         async with (await get_pool()).acquire() as conn:
@@ -298,9 +302,13 @@ async def get_customers_by_company_user(
 
 async def get_categories_by_customer_and_company_user(
     customerId: int = Query(..., description="ID del cliente", example=1),
-    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN, UserRole.COMPANY_USER]))
+    p_user_id: int = Query(None, alias="userId", description="ID del usuario de la compañía", example=1),
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN, UserRole.COMPANY_USER, UserRole.COMPANY_ADMIN]))
 ):
-    company_user_id = current_user.get("ID")
+    if current_user.get("role") == UserRole.COMPANY_USER:
+        company_user_id = current_user.get("ID") # Si es usuario informante, se obtiene el ID del usuario del token
+    else: 
+        company_user_id = p_user_id # Si es administrador o superadmin, se obtiene el ID del usuario pasado por parámetro
     try:
         async with (await get_pool()).acquire() as conn:
             rows = await conn.fetch("SELECT fn_get_categories_by_customer_and_company_user($1, $2);", company_user_id, customerId)

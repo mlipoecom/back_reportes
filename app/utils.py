@@ -5,7 +5,7 @@ import json
 import boto3
 from botocore.exceptions import ClientError
 from fastapi import HTTPException
-
+from typing import Dict, Any, Optional
 from database import get_pool
 from security import decode_token
 
@@ -51,6 +51,19 @@ async def get_user_by_username(user: str):
     if isinstance(user_data, str):
         user_data = json.loads(user_data)
     return user_data
+
+async def get_user_data_by_id(p_user_id: int):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        try:
+            result = await conn.fetchval("SELECT fn_get_user_data_by_id($1)", p_user_id)
+            
+            if not result:
+                return None
+            return result if isinstance(result, dict) else json.loads(result)
+        except Exception as e:
+            print(f"Error en get_user_data_by_id: {e}")
+            return None
 
 async def update_login_attempts(user: str, failed: bool):
     async with (await get_pool()).acquire() as conn:
@@ -167,3 +180,52 @@ def generate_presigned_url(s3_path: str, expiration: int = 30) -> str:
             detail="Error generando URL pre-firmada para el archivo",
         )
 
+async def get_mfa_data_by_user_id(p_user_id: int) -> Optional[Dict[str, Any]]:
+    """
+    Obtiene la configuración MFA llamando a la función fn_get_mfa_data.
+    """
+    pool = await get_pool()
+    
+    async with pool.acquire() as conn:
+        try:
+            result = await conn.fetchval("SELECT fn_get_mfa_data($1)", p_user_id)
+
+            if not result:
+                return None
+
+            if isinstance(result, str):
+                return json.loads(result)
+            
+            return result
+
+        except Exception as e:
+            print(f"Error en database: {e}")
+            return None
+        
+async def activate_mfa_in_db(p_user_id: int):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        try:
+            await conn.execute("SELECT fn_activate_mfa($1)", p_user_id)
+        except Exception as e:
+            print(f"Error al activar MFA: {e}")
+            raise HTTPException(status_code=500, detail="Error al marcar MFA como activo")
+        
+
+async def consume_recovery_code(p_user_id: int, p_used_hash: str):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        try:
+            await conn.execute("SELECT fn_remove_recovery_code($1, $2)", p_user_id, p_used_hash)
+        except Exception as e:
+            print(f"Error al ejecutar fn_remove_recovery_code: {e}")
+            raise HTTPException(status_code=500, detail="No se pudo actualizar el código de recuperación")
+        
+async def update_mfa_device_in_db(user_id: int, new_secret: str):
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        try:
+            await conn.execute("SELECT fn_new_mfa_device($1, $2)", user_id, new_secret)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail="No se pudo actualizar el secreto")
+    return True

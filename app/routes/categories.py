@@ -153,12 +153,13 @@ async def delete_category(
 async def get_categories(
     name: Optional[str] = Query(None, description="Nombre de la categoría"),
     createdBy: Optional[int] = Query(None, description="ID del creador de la categoría"),
-    status: Optional[str] = Query(None, description="Status de l acategoría"),
+    status: Optional[str] = Query(None, description="Status de la categoría"),
     current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN, UserRole.CUSTOMER_ADMIN, UserRole.CUSTOMER_USER, UserRole.COMPANY_ADMIN, UserRole.COMPANY_USER]))):
-    # Obtengo supplierId
-    supplier_id = current_user.get("supplierId")
-    if supplier_id is None:
-        raise HTTPException(status_code=401, detail="No se pudo obtener supplierId del token")
+    # Obtengo userId
+    user_id = current_user.get("ID")
+    print("USER ID",user_id)
+    if user_id is None:
+        raise HTTPException(status_code=401, detail="No se pudo obtener Id del token")
 
     pool = await get_pool()
 
@@ -168,7 +169,7 @@ async def get_categories(
                 """
                 SELECT * FROM fn_get_categories($1, $2, $3, $4)
                 """,
-                supplier_id,
+                user_id,
                 name,
                 createdBy,
                 status
