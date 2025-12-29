@@ -1,10 +1,11 @@
+import json
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from datetime import date
 import bcrypt
 from typing import Dict, Any, List
 from mail import send_user_password_email
-from models import UserGenerate, UserGenerateResponse, AssignClientRequest
+from models import UserGenerate, UserGenerateResponse, AssignClientRequest, UserUpdate
 from utils import generate_safe_password
 from database import get_pool
 from models import AssignRolesRequest
@@ -67,6 +68,57 @@ async def call_sp_insert_user(
         "id": rows[0].get("id", 0)
     }
 
+async def call_sp_update_user(
+    user_id: int,
+    p_id: int,
+    p_name: str = None,
+    p_last_name: str = None,
+    p_external_id: str = None,
+    p_supplier: int = None,
+    p_company: int = None,
+    p_customer: int = None,
+    p_email: str = None,
+) -> Dict[str, Any]:
+
+    async with (await get_pool()).acquire() as conn:
+        try:
+            raw_result = await conn.fetchval(
+                "SELECT fn_update_user($1,$2,$3,$4,$5,$6,$7,$8,$9);",
+                user_id,
+                p_id,
+                p_name,
+                p_last_name,
+                p_external_id,
+                p_supplier,
+                p_company,
+                p_customer,
+                p_email
+            )
+        except Exception as e:
+            msg = str(e).split('\n')[0].strip()
+            raise HTTPException(status_code=500, detail=f"Error en la BD: {msg}")
+
+    if raw_result is None:
+        raise HTTPException(status_code=500, detail="La función no devolvió datos")
+
+    result = json.loads(raw_result)
+    return result
+
+async def call_sp_delete_user(
+    action_user_id: int,
+    user_id: int
+) -> Dict[str, Any]:
+    async with (await get_pool()).acquire() as conn:
+        raw_result = await conn.fetchval(
+            "SELECT fn_delete_user($1, $2);",
+            action_user_id,
+            user_id
+        )
+
+    if raw_result is None:
+        raise HTTPException(status_code=500, detail="La función no devolvió datos")
+
+    return json.loads(raw_result)
 
 async def assign_role_to_user(user_id: int, role_id: int) -> None:
     print(f"assign_role_to_user called with user_id: {user_id}, role_id: {role_id}")
@@ -295,6 +347,144 @@ async def generate_and_create_user(
         info=db_response["info"],
         id=new_user_id
     )
+
+@router.put(
+    "/usuario/{userEdit_id}/editar",
+    summary="Editar usuario",
+    description="Editar un usuario de una empresa",
+    responses={
+        200: {
+            "description": "Ejecución exitosa",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "info": "Usuario modificado exitosamente.",
+                        "id": 1
+                    }
+                }
+            },
+        },
+        400: {
+            "description": "Ejecución fallida",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "info": "No existe un usuario con el ID",
+                        "id": 0
+                    }
+                }
+            },
+        },
+        500: {
+            "description": "Error interno del servidor",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "info": "Error en la BD: conexión fallida",
+                        "id": 0
+                    }
+                }
+            },
+        },
+    }
+)
+
+async def edit_user(
+    user_data: UserUpdate,
+    userEdit_id:int,
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN]))):
+    role_name_to_id = {
+        "super_admin": UserRole.SUPER_ADMIN,
+        "supplier_admin": UserRole.SUPPLIER_ADMIN,
+        "customer_admin": UserRole.CUSTOMER_ADMIN,
+        "customer_user": UserRole.CUSTOMER_USER,
+        "company_admin": UserRole.COMPANY_ADMIN,
+        "company_user": UserRole.COMPANY_USER,
+    }
+    user_id = current_user.get("ID")
+
+    db_response = await call_sp_update_user(
+        user_id,
+        userEdit_id,
+        user_data.name,
+        user_data.lastName,
+        user_data.externalId,
+        p_supplier=user_data.supplierId if user_data.supplierId else None,
+        p_company=user_data.companyId if user_data.companyId else None,
+        p_customer=user_data.customerId if user_data.customerId else None,
+        p_email=user_data.email,
+    )
+
+    if db_response["id"] == 0 or (db_response["info"] and "error" in db_response["info"].lower()):
+        return JSONResponse(
+            status_code=400,
+            content={
+                "info": db_response["info"],
+                "password": "",
+                "id": 0
+            }
+        )
+    
+    # Assign role if provided
+    if user_data.role is not None:
+        print(f"roleName: {user_data.role}")
+        role_id = role_name_to_id.get(user_data.role.lower())
+        print(f"role_id: {role_id}")
+        if role_id is None:
+            raise HTTPException(status_code=400, detail=f"Rol '{user_data.role}' no válido")
+        await assign_role_to_user(db_response["id"], role_id)
+
+    return UserGenerateResponse(
+        info=db_response["info"],
+        id=db_response["id"]
+    )
+
+
+@router.delete(
+    "/usuario/{user_id}/eliminar",
+    summary="Eliminar usuario",
+    description="Elimina un usuario por ID",
+    responses={
+        200: {
+            "description": "Usuario eliminado correctamente"
+        },
+        400: {
+            "description": "Error de validación"
+        },
+        401: {
+            "description": "No autorizado"
+        },
+        500: {
+            "description": "Error interno"
+        },
+    }
+)
+async def delete_user(
+    user_id: int,
+    current_user: dict = Depends(
+        require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN])
+    )
+):
+    action_user_id = current_user.get("ID")
+    if action_user_id is None:
+        raise HTTPException(status_code=401, detail="No se pudo obtener el usuario del token")
+
+    db_response = await call_sp_delete_user(
+        action_user_id=action_user_id,
+        user_id=user_id
+    )
+
+    if db_response.get("affectedRows", 0) == 0:
+        return JSONResponse(
+            status_code=400,
+            content=db_response
+        )
+
+    return JSONResponse(
+    status_code=200,
+    content=db_response
+)
+
 @router.post(
     "/asignar-roles",
     summary="Asignar roles",
