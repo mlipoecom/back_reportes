@@ -86,4 +86,13 @@ class CategoryUpdateRequest(BaseModel):
     newName: Optional[str] = None
     newDescription: Optional[str] = None
 
+class MfaRequiredResponse(BaseModel):
+    requiresMfa: bool
+    mfaStatus: str
+    mfaToken: str
+    mfaSecret: Optional[str] = None
+
+class MfaVerifyRequest(BaseModel):
+   code: str
+   mfaToken: str = Field(...)
 

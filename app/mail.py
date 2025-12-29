@@ -30,13 +30,14 @@ def send_email_via_smtp(subject: str, body: str, to_email: str):
         )
 
 
-def send_user_password_email(user_email: str, full_name: str, username: str, generated_password: str):
+def send_user_password_email(user_email: str, full_name: str, username: str, generated_password: str, recovery_codes: str):
     subject = "Tu acceso al portal"
     body = (
         f"Hola {full_name}.\n\n"
         f"Tu cuenta ha sido creada correctamente.\n\n"
         f"Usuario: {username}\n"
         f"Contraseña: {generated_password}\n\n"
+        f"Claves de recuperación:\n{recovery_codes}\n\n"
         "Saludos,\nEl equipo de soporte."
     )
     send_email_via_smtp(subject, body, user_email)
