@@ -3,6 +3,7 @@ import pyotp
 from fastapi import APIRouter, HTTPException, Depends
 from datetime import timedelta
 from typing import Union, Dict, Any
+from config import DEV_CONFIG
 
 from security import create_access_token, create_refresh_token, decode_token
 from utils import (
@@ -54,20 +55,20 @@ async def login(request: LoginRequest):
     await update_login_attempts(request.usuario, False)
     await update_sent_mail(request.usuario, False)
 
-    if role == 1:
+    user_data = await get_user_data_by_id(user_id)
+    if not user_data:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-        user_data = await get_user_data_by_id(user_id)
-        if not user_data:
-            raise HTTPException(status_code=404, detail="Usuario no encontrado")
-
-        jwt_payload = {k: v for k, v in user_data.items() if k not in ["hashPassword", "recoveryCodes"]}
+    jwt_payload = {k: v for k, v in user_data.items() if k not in ["hashPassword", "recoveryCodes"]}
         
-        access_token = create_access_token(jwt_payload)
-        refresh_token = create_refresh_token(jwt_payload)
-
+    access_token = create_access_token(jwt_payload)
+    refresh_token = create_refresh_token(jwt_payload)
+    if role == 1:
         # Log
         await insert_log(user_data.get("companyId"), user_id)
-        
+        return TokenResponse(accessToken=access_token, refreshToken=refresh_token)
+    
+    if(DEV_CONFIG.get("DEBUG") is True):
         return TokenResponse(accessToken=access_token, refreshToken=refresh_token)
 
     # Buscar estado MFA (Para el resto de los roles)
