@@ -1,6 +1,6 @@
 import bcrypt
 import pyotp
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from datetime import timedelta
 from typing import Union, Dict, Any
 from config import DEV_CONFIG
@@ -14,7 +14,8 @@ from utils import (
     activate_mfa_in_db,
     get_user_data_by_id,
     consume_recovery_code,
-    update_mfa_device_in_db
+    update_mfa_device_in_db,
+    get_client_ip
 )
 from mail import update_sent_mail
 from models import LoginRequest, TokenResponse, MfaRequiredResponse, MfaVerifyRequest
@@ -30,8 +31,8 @@ router = APIRouter(
              response_model=Union[TokenResponse, MfaRequiredResponse],
              summary="Login",
              description="Valida usuario y contraseña")
-async def login(request: LoginRequest):
-    user = await get_user_by_username(request.usuario)
+async def login(request_data: LoginRequest, request: Request):
+    user = await get_user_by_username(request_data.usuario)
     if not user:
         raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
 
@@ -47,15 +48,17 @@ async def login(request: LoginRequest):
 
     # Validación de Hash
     stored_hash = user.get("hashPassword")
-    if not stored_hash or not bcrypt.checkpw(request.contraseña.encode("utf-8"), stored_hash.encode("utf-8")):
-        await update_login_attempts(request.usuario, True)
+    if not stored_hash or not bcrypt.checkpw(request_data.contraseña.encode("utf-8"), stored_hash.encode("utf-8")):
+        await update_login_attempts(request_data.usuario, True)
         raise HTTPException(status_code=401, detail="Usuario o contraseña incorrectos")
 
     # Reseteo de intentos
-    await update_login_attempts(request.usuario, False)
-    await update_sent_mail(request.usuario, False)
+    await update_login_attempts(request_data.usuario, False)
+    await update_sent_mail(request_data.usuario, False)
 
     user_data = await get_user_data_by_id(user_id)
+    user_ip = get_client_ip(request)
+    print(user_ip)
     if not user_data:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
@@ -65,7 +68,7 @@ async def login(request: LoginRequest):
     refresh_token = create_refresh_token(jwt_payload)
     if role == 1:
         # Log
-        await insert_log(user_data.get("companyId"), user_id)
+        await insert_log(user_data.get("companyId"), user_id, user_ip)
         return TokenResponse(accessToken=access_token, refreshToken=refresh_token)
     
     if(DEV_CONFIG.get("DEBUG") is True):
@@ -105,10 +108,10 @@ async def login(request: LoginRequest):
              response_model=TokenResponse,
              summary="Verificar MFA",
              description="Valida el código y entrega tokens finales")
-async def verify_mfa(request: MfaVerifyRequest):
+async def verify_mfa(mfa_request: MfaVerifyRequest, request: Request):
     # Validar el mfaToken temporal
     try:
-        payload = decode_token(request.mfaToken)
+        payload = decode_token(mfa_request.mfaToken)
         user_id = payload.get("userId")
         if not user_id or not payload.get("pendingMfa"):
             raise HTTPException(status_code=401, detail="Token MFA inválido o expirado")
@@ -123,7 +126,7 @@ async def verify_mfa(request: MfaVerifyRequest):
     secret = mfa_data.get("mfaSecret")
     is_already_enabled = mfa_data.get("isEnabled")
     recovery_hashes = mfa_data.get("recoveryCodes") or []
-    input_code = request.code.strip().upper()
+    input_code = mfa_request.code.strip().upper()
 
     mfa_authenticated = False
     
@@ -139,7 +142,7 @@ async def verify_mfa(request: MfaVerifyRequest):
     if not mfa_authenticated:
         totp = pyotp.TOTP(secret)
         # valid_window=1 permite un desfase de 30s por si el reloj del celu no está exacto
-        if totp.verify(request.code, valid_window=1):
+        if totp.verify(mfa_request.code, valid_window=1):
             mfa_authenticated = True
 
     if not mfa_authenticated:
@@ -160,7 +163,8 @@ async def verify_mfa(request: MfaVerifyRequest):
     refresh_token = create_refresh_token(jwt_payload)
 
     # Logs
-    await insert_log(user_data.get("companyId"), user_data.get("ID"))
+    user_ip = get_client_ip(request)
+    await insert_log(user_data.get("companyId"), user_data.get("ID"), user_ip)
     
     return TokenResponse(accessToken=access_token, refreshToken=refresh_token)
 

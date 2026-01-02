@@ -4,7 +4,7 @@ import json
 
 import boto3
 from botocore.exceptions import ClientError
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 from typing import Dict, Any, Optional
 from database import get_pool
 from security import decode_token
@@ -70,18 +70,20 @@ async def update_login_attempts(user: str, failed: bool):
         await conn.execute("SELECT fn_update_login_attempts($1, $2);", user, failed)
 
 
-async def insert_log(company: int, user:int) -> dict:
+async def insert_log(company: int, user:int, ip:str) -> dict:
     p_company = int(company)
     p_user = int(user)
+    p_ip = str(ip)
     cursor_name = "log_insert_result"
     try:
         pool = await get_pool()
         async with pool.acquire() as conn:
             async with conn.transaction():
                 await conn.execute(
-                    "CALL sp_insert_log($1::integer, $2::integer, $3);",
+                    "CALL sp_insert_log($1::integer, $2::integer, $3, $4);",
                     p_company,
                     p_user,
+                    p_ip,
                     cursor_name
                 )
 
@@ -229,3 +231,9 @@ async def update_mfa_device_in_db(user_id: int, new_secret: str):
         except Exception as e:
             raise HTTPException(status_code=500, detail="No se pudo actualizar el secreto")
     return True
+
+def get_client_ip(request: Request):
+    x_forwarded_for = request.headers.get("X-Forwarded-For")
+    if x_forwarded_for:
+        return x_forwarded_for.split(",")[0].strip()
+    return request.client.host
