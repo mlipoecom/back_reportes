@@ -25,3 +25,7 @@ TOKEN_CONFIG = {
 S3_CONFIG = {
     "S3_BUCKET": "portal-informes-dev"
 }
+
+DEV_CONFIG = {
+    "DEBUG": True,
+}
