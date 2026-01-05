@@ -303,3 +303,149 @@ async def delete_supplier(
             status_code=500,
             detail=str(e)
         )
+
+
+@router.get("/logs/listar-descargas",
+            summary="Listar descargas",
+            description="Devuelve la lista de descargas.",
+            responses={
+                200: {
+                    "description": "Ejecución exitosa",
+                    "content": {
+                        "application/json": {
+                            "example": {
+                                "info": "Descargas listadas exitosamente",
+                                "downloads": [
+                                    {
+                                        "id": 1,
+                                        "name": "Descarga 1",
+                                        "description": "Descripción 1",
+                                        "createdAt": "2025-10-29",
+                                        "createdBy": "provAdmin"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                },
+                500: {
+                    "description": "Error interno",
+                    "content": {
+                        "application/json": {
+                            "example": {
+                                "info": "Error en la BD",
+                                "downloads": []
+                            }
+                        }
+                    },
+                },
+            }
+)
+async def get_download_logs(
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN])),
+    user_id: Optional[int] = Query(None, description="ID del usuario"),
+    date_from: Optional[date] = Query(None, description="Fecha desde (YYYY-MM-DD)"),
+    date_to: Optional[date] = Query(None, description="Fecha hasta (YYYY-MM-DD)"),
+    limit: Optional[int] = Query(10, description="Cantidad máxima de registros a devolver."),
+    offset: Optional[int] = Query(0, description="Cantidad de registros a omitir antes de comenzar la lista."),
+):
+    try:
+        user_id_from_token = current_user.get("ID")
+
+        if user_id_from_token is None:
+            raise HTTPException(status_code=401, detail="No se pudo obtener userId del token")
+
+        async with (await get_pool()).acquire() as conn:
+            rows = await conn.fetch(
+                "SELECT * FROM fn_get_download_logs($1,$2,$3,$4,$5);",
+                user_id if user_id else None,
+                date_from if date_from else None,
+                date_to if date_to else None,
+                limit if limit else 10,
+                offset if offset else 0,
+            )
+            
+            # Extraer log_data y total_count de las columnas separadas
+            total = rows[0]["total_count"] if rows else 0
+            downloads = [record["log_data"] for record in rows]            
+            return {
+                "info": "Descargas listadas exitosamente",
+                "downloads": downloads,
+                "total": total
+            }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+
+@router.get("/logs/listar-ingresos",
+            summary="Listar ingresos",
+            description="Devuelve la lista de ingresos.",
+            responses={
+                200: {
+                    "description": "Ejecución exitosa",
+                    "content": {
+                        "application/json": {
+                            "example": {
+                                "info": "Ingresos listados exitosamente",
+                                "ingresos": [
+                                    {
+                                        "user_id": 1,
+                                        "user_name": "user_name",
+                                        "date": "2025-10-29",
+                                        "ip": "127.0.0.1",
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                },
+                500: {
+                    "description": "Error interno",
+                    "content": {
+                        "application/json": {
+                            "example": {
+                                "info": "Error en la BD",
+                                "ingresos": []
+                            }
+                        }
+                    },
+                },
+            }
+)
+async def get_login_logs(
+    current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN])),
+    user_id: Optional[int] = Query(None, description="ID del usuario"),
+    date_from: Optional[date] = Query(None, description="Fecha desde (YYYY-MM-DD)"),
+    date_to: Optional[date] = Query(None, description="Fecha hasta (YYYY-MM-DD)"),
+    limit: Optional[int] = Query(10, description="Cantidad máxima de registros a devolver."),
+    offset: Optional[int] = Query(0, description="Cantidad de registros a omitir antes de comenzar la lista."),
+):
+    try:
+        user_id_from_token = current_user.get("ID")
+
+        if user_id_from_token is None:
+            raise HTTPException(status_code=401, detail="No se pudo obtener userId del token")
+
+        async with (await get_pool()).acquire() as conn:
+            rows = await conn.fetch(
+                "SELECT * FROM fn_get_login_logs($1,$2,$3,$4,$5);",
+                user_id if user_id else None,
+                date_from if date_from else None,
+                date_to if date_to else None,
+                limit if limit else 10,
+                offset if offset else 0,
+            )
+            
+            # Extraer log_data y total_count de las columnas separadas
+            total = rows[0]["total_count"] if rows else 0
+            logins = [record["log_data"] for record in rows]
+            
+            return {
+                "info": "Ingresos listados exitosamente",   
+                "logins": logins,
+                "total": total
+            }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
