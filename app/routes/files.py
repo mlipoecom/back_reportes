@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query, HTTPException, Depends
+from fastapi import APIRouter, Query, HTTPException, Depends, Request
 from typing import Optional, Dict, Any
 from datetime import date
 from dateutil import parser as date_parser
@@ -6,7 +6,7 @@ import json
 from database import get_pool
 from dependencies import require_roles
 from roles import UserRole
-from utils import generate_presigned_url
+from utils import generate_presigned_url, get_client_ip
 
 router = APIRouter(
     prefix="/app/archivos",
@@ -162,13 +162,13 @@ async def get_archivos(
 )
 async def download_file_by_id(
     file_id: int,
+    request: Request,
     current_user: dict = Depends(require_roles([UserRole.SUPER_ADMIN, UserRole.SUPPLIER_ADMIN, UserRole.CUSTOMER_ADMIN, UserRole.CUSTOMER_USER, UserRole.COMPANY_ADMIN, UserRole.COMPANY_USER]))
     )-> str:
     """Obtiene el archivo por id y registra la descarga."""
     user_id = current_user.get("ID")
 
-    #TODO: Ver como obtener el ip
-    ip = "127.0.0.1"
+    ip = get_client_ip(request)
 
     pool = await get_pool()
     async with pool.acquire() as conn:
