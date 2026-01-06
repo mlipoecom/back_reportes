@@ -55,9 +55,6 @@ class UserUpdate(BaseModel):
     lastName: str = Field(..., max_length=50, example="Doe", description="Apellido del usuario")
     email: EmailStr = Field(..., example="john.doe@ecom.com.uy", description="Email del usuario")
     externalId: str = Field(..., max_length=50, example="johnDoe123", description="Identificador externo del usuario")
-    supplierId: Optional[int] = Field(None, example=1, description="ID del proveedor al que pertenece el usuario")
-    companyId: Optional[int] = Field(None, example=1, description="ID de la compañía a la que pertenece el usuario")
-    customerId: Optional[int] = Field(None, example=1, description="ID del cliente al que pertenece el usuario")
     status: str = Field('activo', description="Estado inicial del usuario ('activo', 'suspendido', 'inactivo')")
     role: Optional[str] = Field(None, example="supplier_admin", description="Nombre del rol a asignar al usuario")
 

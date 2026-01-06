@@ -11,6 +11,7 @@ from database import get_pool
 from models import AssignRolesRequest
 from dependencies import require_roles
 from roles import UserRole
+from routes.update_status import update_status
 import pyotp
 import secrets
 import string
@@ -74,24 +75,18 @@ async def call_sp_update_user(
     p_name: str = None,
     p_last_name: str = None,
     p_external_id: str = None,
-    p_supplier: int = None,
-    p_company: int = None,
-    p_customer: int = None,
     p_email: str = None,
 ) -> Dict[str, Any]:
 
     async with (await get_pool()).acquire() as conn:
         try:
             raw_result = await conn.fetchval(
-                "SELECT fn_update_user($1,$2,$3,$4,$5,$6,$7,$8,$9);",
+                "SELECT fn_update_user($1,$2,$3,$4,$5,$6);",
                 user_id,
                 p_id,
                 p_name,
                 p_last_name,
                 p_external_id,
-                p_supplier,
-                p_company,
-                p_customer,
                 p_email
             )
         except Exception as e:
@@ -409,9 +404,6 @@ async def edit_user(
         user_data.name,
         user_data.lastName,
         user_data.externalId,
-        p_supplier=user_data.supplierId if user_data.supplierId else None,
-        p_company=user_data.companyId if user_data.companyId else None,
-        p_customer=user_data.customerId if user_data.customerId else None,
         p_email=user_data.email,
     )
 
@@ -433,6 +425,10 @@ async def edit_user(
         if role_id is None:
             raise HTTPException(status_code=400, detail=f"Rol '{user_data.role}' no válido")
         await assign_role_to_user(db_response["id"], role_id)
+
+    # Cambiar status si lo envían
+    if user_data.status is not None:
+        await update_status(db_response["id"], "user", user_data.status)
 
     return UserGenerateResponse(
         info=db_response["info"],
